@@ -8,4 +8,5 @@ This project is a fork of [Azuri](https://github.com/AzuraCast/Azuri), but at th
 - [x] listen to the station on voice channels;
 - [x] show last played tracks, currently playing;
 - [ ] update channel status on song changes (only updates when joining the vc);
+- [ ] update bot presence on song changes;
 - [ ] dockerize it
