@@ -1,15 +1,16 @@
-version: "2.2"
-
 services:
-  azuri:
+  wbor-bot:
     image: wborfm/discord-bot:latest
     build:
       context: .
-    env_file: azuri.env
+      dockerfile: Dockerfile
+    environment:
+      - STATION_API_URL=https://azura.wbor.org/api/station/2
+      - BOT_TOKEN=${BOT_TOKEN}
     volumes:
-      - ./src:/data
-      - azuri_persist:/data/persist
+      - ./persist:/app/persist
+    restart: unless-stopped
 
 volumes:
-  azuri_persist: {}
-  azuri_node_modules: {}
+  persist:
+    driver: local
