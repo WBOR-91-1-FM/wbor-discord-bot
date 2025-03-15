@@ -1,41 +1,55 @@
+/*
+ * Loads commands dynamically, registers them with the Discord API, etc
+ */
+
 import fs from "fs";
 import path from "path";
-import { SlashCommandBuilder, REST, Routes } from "discord.js";
+import { SlashCommandBuilder, REST, Routes, Client } from "discord.js";
+import { ImportedCommand } from "./command";
 
 export class CommandRegistry {
-  constructor(client) {
-    this.client = client;
+  public commands: ImportedCommand[];
+
+  constructor() {
     this.commands = [];
 
     this.loadCommands();
   }
 
-  registerCommand(command) {
+  registerCommand(command: ImportedCommand): void {
+    const cleanInfo = {
+      ...command.info,
+      aliases: command.info.aliases || [],
+    };
+
     this.commands.push({
       ...command,
-      aliases: command.aliases || [],
+      info: cleanInfo,
     });
   }
 
-  findByName(name) {
+  findByName(name: string): ImportedCommand | undefined {
     return this.commands.find(
-      (command) => command.name === name || command.aliases.includes(name),
+      (command) =>
+        command.info.name === name ||
+        (command.info.aliases?.includes(name) ?? false),
     );
   }
 
-  async loadCommands() {
-    const commandFiles = fs
-      .readdirSync("./src/commands")
-      .filter((file) => file.endsWith(".js"));
+  async loadCommands(): Promise<void> {
+    const commandFiles = fs.readdirSync("./src/commands");
     for (const file of commandFiles) {
       const pat = path.resolve("./src/commands", file);
       const command = await import(pat);
-      this.registerCommand(command.default);
+      this.registerCommand(command);
     }
-    console.log("loaded", commandFiles.length, "commands");
+    console.log("Loaded", commandFiles.length, "commands");
   }
 
-  async registerApplicationCommands(applicationId, token) {
+  async registerApplicationCommands(
+    applicationId: string,
+    token: string,
+  ): Promise<void> {
     if (!applicationId || !token) {
       console.error(
         "Application ID and token are required to register slash commands",
@@ -43,22 +57,21 @@ export class CommandRegistry {
       return;
     }
 
-    const slashCommands = [];
+    const slashCommands: any[] = [];
 
     // Convert each command to a slash command
     for (const command of this.commands) {
-      // Skip commands marked as 'noSlash' or disabled
-      if (command.noSlash || command.enabled === false) continue;
+      if (command.info.private) continue;
 
       try {
         const slashCommand = new SlashCommandBuilder()
-          .setName(command.name.toLowerCase())
-          .setDescription(command.description || `The ${command.name} command`);
+          .setName(command.info.name.toLowerCase())
+          .setDescription(command.info.description);
 
         slashCommands.push(slashCommand.toJSON());
       } catch (error) {
         console.error(
-          `Failed to convert command ${command.name} to slash command:`,
+          `Failed to convert command ${command.info.name} to slash command:`,
           error,
         );
       }
@@ -79,7 +92,7 @@ export class CommandRegistry {
         });
 
         console.log(
-          `Successfully registered ${data.length} application commands.`,
+          `Successfully registered ${(data as any[]).length} application commands.`,
         );
       } catch (error) {
         console.error("Error registering slash commands:", error);

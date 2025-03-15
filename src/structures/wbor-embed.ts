@@ -1,5 +1,6 @@
-import { EMBED_COLOR, LOGO_URL } from "../constants.mjs";
+import { EMBED_COLOR, LOGO_URL } from "../constants.ts";
 import { EmbedBuilder } from "discord.js";
+
 export default class WBOREmbed extends EmbedBuilder {
   constructor() {
     super();

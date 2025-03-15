@@ -1,33 +1,27 @@
 {
   "name": "wbor-discord-bot",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "A Discord bot for WBOR, inspired by Azuracast's Azuri",
   "main": "inbox.js",
+  "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "bun run index.ts",
+    "dev:start": "bun run --watch index.ts"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AzuraCast/Azuri.git"
+    "url": "git+https://github.com/WBOR-91-1-FM/wbor-discord-bot.git"
   },
-  "keywords": [
-    "NodeJS",
-    "Discord.js",
-    "Azuri",
-    "Azuracast"
-  ],
-  "author": "Azuracast",
-  "type": "module",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "bugs": {
-    "url": "https://github.com/AzuraCast/Azuri/issues"
+    "url": "https://github.com/WBOR-91-1-FM/wbor-discord-bot/issues"
   },
-  "homepage": "https://github.com/AzuraCast/Azuri#readme",
+  "homepage": "https://github.com/WBOR-91-1-FM/wbor-discord-bot#readme",
   "dependencies": {
     "@discordjs/voice": "^0.18.0",
+    "cheerio": "^1.0.0",
     "discord.js": "^14.18.0",
-    "dotenv": "^16.4.7",
-    "fs": "^0.0.2",
+    "eventsource": "^3.0.5",
     "libsodium-wrappers": "^0.7.15",
     "mime-types": "^2.1.35"
   }

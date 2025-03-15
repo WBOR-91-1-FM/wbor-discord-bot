@@ -1,15 +1,14 @@
-version: '2.2'
+version: "2.2"
 
 services:
   azuri:
-    image: azuracast/azuri:latest
+    image: wborfm/discord-bot:latest
     build:
       context: .
     env_file: azuri.env
     volumes:
-     - ./src:/data
-     - azuri_persist:/data/persist
-     - azuri_node_modules:/data/node_modules
+      - ./src:/data
+      - azuri_persist:/data/persist
 
 volumes:
   azuri_persist: {}
