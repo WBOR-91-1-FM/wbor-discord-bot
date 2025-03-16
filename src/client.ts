@@ -10,13 +10,18 @@ import { StateHandler } from "./structures/state-handler";
 import { commandRegistry } from "./structures/commands/registry";
 import { Context } from "./structures/commands/context";
 import { logError } from "./utils/misc";
-import { getForGuild, loadGuildData } from "./utils/guilds";
 import {
   playRadio,
   updateAllChannelStatuses,
   updateChannelStatus,
 } from "./utils/radio";
 import { NowPlayingData } from "./utils/wbor";
+import {
+  getAllExistingVoiceChannels,
+  getOrCreateGuild,
+  GuildEntity,
+} from "./database/entities/guilds";
+import { getOrCreateUser, UserEntity } from "./database/entities/users";
 
 export class WBORClient extends Client {
   stateHandler = new StateHandler();
@@ -47,7 +52,6 @@ export class WBORClient extends Client {
     this.on("interactionCreate", (interaction) =>
       this.onInteractionCreate(interaction),
     );
-    this.on("guildCreate", (guild) => this.onGuildCreate(guild));
 
     this.stateHandler.on("trackChange", async (np: NowPlayingData) => {
       this.user?.setPresence({
@@ -64,12 +68,10 @@ export class WBORClient extends Client {
   }
 
   async joinChannels() {
-    const guildData = loadGuildData();
+    const voiceChannels = await getAllExistingVoiceChannels();
 
-    for (let serverData of guildData) {
-      if (!serverData.home) return;
-
-      const channel = await this.channels.fetch(serverData.home);
+    for (const vc of voiceChannels) {
+      const channel = await this.channels.fetch(vc!);
       if (!channel?.isVoiceBased()) continue;
 
       await playRadio(channel)
@@ -107,10 +109,6 @@ export class WBORClient extends Client {
     await this.joinChannels();
   }
 
-  async onGuildCreate(guild: Guild) {
-    getForGuild(guild.id);
-  }
-
   async onInteractionCreate(interaction: Interaction) {
     // once a command gets in, it is likely that the bot is connected to Azuracast. but we must wait anyways to avoid any potential issues
     await this.stateHandler.waitForTrack();
@@ -123,7 +121,22 @@ export class WBORClient extends Client {
         flags: MessageFlags.Ephemeral,
       });
 
-    const ctx = new Context(interaction as any, this);
+    if (command.info.noDM && interaction.channel?.isDMBased())
+      return interaction.reply({
+        content: "☹️ Sorry, this command cannot be used in DMs.",
+        flags: MessageFlags.Ephemeral,
+      });
+
+    const userData = await getOrCreateUser(interaction.user.id);
+    const guildData = interaction.channel?.isDMBased()
+      ? null
+      : await getOrCreateGuild(interaction.guildId!);
+
+    const ctx = new Context(interaction, this, {
+      guildEntity: guildData ? new GuildEntity(guildData) : null,
+      userEntity: new UserEntity(userData),
+    });
+
     try {
       await command.default(ctx);
     } catch (error) {

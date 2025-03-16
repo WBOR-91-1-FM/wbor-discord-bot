@@ -1,5 +1,5 @@
 import { getVoiceConnection } from "@discordjs/voice";
-import { PermissionFlagsBits, TextChannel } from "discord.js";
+import { GuildMember, PermissionFlagsBits, TextChannel } from "discord.js";
 import { CommandInfo } from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
 
@@ -7,6 +7,7 @@ export const info: CommandInfo = {
   name: "leave",
   description: "Leaves the voice channel you are in and stops the radio.",
   aliases: ["l", "exit", "stop", "quit"],
+  noDM: true,
 };
 
 export default async (ctx: Context): Promise<void> => {
@@ -16,7 +17,7 @@ export default async (ctx: Context): Promise<void> => {
   }
 
   const memberPermissions = (ctx.message.channel as TextChannel).permissionsFor(
-    ctx.message.member!,
+    ctx.message.member! as GuildMember,
   );
 
   if (

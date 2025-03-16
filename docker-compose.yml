@@ -1,5 +1,5 @@
 services:
-  wbor-bot:
+  bot:
     image: wborfm/discord-bot:latest
     build:
       context: .
@@ -7,10 +7,19 @@ services:
     environment:
       - STATION_API_URL=https://azura.wbor.org/api/station/2
       - BOT_TOKEN=${BOT_TOKEN}
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
     volumes:
-      - ./persist:/app/persist
+      - wbor-discord-pg:/var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
-  persist:
+  wbor-discord-pg:
     driver: local

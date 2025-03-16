@@ -5,7 +5,12 @@
  * We also use define the answer method, which is basically message.reply without mentioning the author.
  */
 import {
+  CommandInteraction,
   Guild,
+  GuildMember,
+  Interaction,
+  InteractionReplyOptions,
+  InteractionResponse,
   Message,
   MessagePayload,
   MessageReplyOptions,
@@ -14,37 +19,47 @@ import {
   VoiceBasedChannel,
 } from "discord.js";
 import { WBORClient } from "../../client";
+import { GuildEntity } from "../../database/entities/guilds";
+import { UserEntity } from "../../database/entities/users";
 
 export class Context {
+  guildEntity: GuildEntity | null;
+  userEntity: UserEntity;
+
   constructor(
-    public message: Message,
+    public message: CommandInteraction,
     public client: WBORClient,
+    { guildEntity, userEntity },
   ) {
     this.message = message;
     this.client = client;
+    this.guildEntity = guildEntity;
+    this.userEntity = userEntity;
   }
 
   get author(): User {
-    return this.message.author;
+    return this.message.user;
   }
 
-  get channel(): TextChannel {
-    return this.message.channel as TextChannel;
+  get channel() {
+    return this.message.channel;
   }
 
-  get guild(): Guild {
-    return this.message.guild as Guild;
+  get guild(): Guild | null {
+    return this.message.guild;
   }
 
   get voiceChannel(): VoiceBasedChannel | null {
-    return this.message.member?.voice.channel || null;
+    return (
+      (this.message.member as GuildMember | undefined)?.voice.channel || null
+    );
   }
 
-  async answer(content: string | MessagePayload): Promise<Message> {
+  async answer(content: string | MessagePayload): Promise<InteractionResponse> {
     return this.message.reply(content);
   }
 
-  reply(data: string | MessagePayload | MessageReplyOptions): Promise<Message> {
+  reply(data: string | InteractionReplyOptions): Promise<InteractionResponse> {
     return this.message.reply(data);
   }
 }
