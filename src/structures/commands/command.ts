@@ -9,6 +9,7 @@ export interface CommandInfo {
   aliases?: string[];
   private?: boolean;
   devOnly?: boolean;
+  noDM?: boolean;
 }
 
 export type CommandBody = (ctx: Context) => Promise<void>;
