@@ -28,4 +28,6 @@ export interface SpinitronShow {
   isAutomationBear: boolean;
   /// The upcoming shows on the station.
   upcomingShows: SpinitronUpcomingShow[];
+  /// The featured artists, if any
+  featuredArtists?: string[];
 }

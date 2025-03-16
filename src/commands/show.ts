@@ -17,10 +17,28 @@ export default async (ctx: Context) => {
     .setTitle(show.title)
     .setDescription(show.description)
     .setThumbnail(show.image)
-    .setFields({
-      name: "Hosted by",
-      value: show.host,
-    })
+    .setFields(
+      [
+        {
+          name: "Hosted by",
+          value: show.host,
+        },
+        {
+          name: "Featured Artists",
+          value: show.featuredArtists?.join?.(", ") as unknown as string,
+          inline: true,
+        },
+        {
+          name: "Genre",
+          value: show.genre as unknown as string,
+          inline: true,
+        },
+      ].filter((a) => a.value) as Array<{
+        name: string;
+        value: string;
+        inline?: boolean;
+      }>,
+    )
     .setFooter({ text: show.timeslot });
 
   await ctx.reply({ embeds: [embed] });
