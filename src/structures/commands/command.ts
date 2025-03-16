@@ -6,7 +6,6 @@ import { Context } from "./context";
 export interface CommandInfo {
   name: string;
   description: string;
-  aliases?: string[];
   private?: boolean;
   devOnly?: boolean;
   noDM?: boolean;

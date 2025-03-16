@@ -6,7 +6,6 @@ import { Context } from "../structures/commands/context";
 export const info: CommandInfo = {
   name: "help",
   description: "Get a list of all commands",
-  aliases: ["h"],
 };
 
 export default async (ctx: Context): Promise<void> => {
@@ -14,16 +13,8 @@ export default async (ctx: Context): Promise<void> => {
   commandRegistry.commands.forEach((command) => {
     if (command.info.private) return;
 
-    let aliases = "";
-
-    if (command.info.aliases) {
-      command.info.aliases.forEach((alias) => {
-        aliases += " `" + alias + "` ";
-      });
-    }
-
     commands.push({
-      name: `${command.info.name}${aliases}`,
+      name: `${command.info.name}`,
       value: command.info.description,
     });
   });

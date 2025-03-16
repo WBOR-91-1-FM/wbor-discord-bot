@@ -5,7 +5,6 @@ import { Context } from "../structures/commands/context";
 export const info: CommandInfo = {
   name: "show",
   description: "Sends what show is on air right now.",
-  aliases: ["sh"],
 };
 
 export default async (ctx: Context) => {

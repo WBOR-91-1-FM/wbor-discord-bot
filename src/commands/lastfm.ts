@@ -5,8 +5,9 @@ import { Context } from "../structures/commands/context";
 import { GuildMember } from "discord.js";
 
 export const info: CommandInfo = {
-  name: "join",
-  description: "Joins the voice channel you are in and starts the radio.",
+  name: "lastfm",
+  description:
+    "Connects your last.fm account to the bot so you can scrobble your music.",
   noDM: true,
 };
 

@@ -5,16 +5,6 @@ import { Context } from "../structures/commands/context";
 export const info: CommandInfo = {
   name: "listeners",
   description: "Displays the current listener count and bot statistics.",
-  aliases: [
-    "tuned",
-    "listenercount",
-    "stationinfo",
-    "stat",
-    "info",
-    "botinfo",
-    "bi",
-    "stats",
-  ],
 };
 
 export default async (ctx: Context): Promise<void> => {

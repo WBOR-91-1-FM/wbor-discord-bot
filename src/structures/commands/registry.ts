@@ -17,23 +17,11 @@ export class CommandRegistry {
   }
 
   registerCommand(command: ImportedCommand): void {
-    const cleanInfo = {
-      ...command.info,
-      aliases: command.info.aliases || [],
-    };
-
-    this.commands.push({
-      ...command,
-      info: cleanInfo,
-    });
+    this.commands.push(command);
   }
 
   findByName(name: string): ImportedCommand | undefined {
-    return this.commands.find(
-      (command) =>
-        command.info.name === name ||
-        (command.info.aliases?.includes(name) ?? false),
-    );
+    return this.commands.find((command) => command.info.name === name);
   }
 
   async loadCommands(): Promise<void> {

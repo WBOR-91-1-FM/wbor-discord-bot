@@ -6,7 +6,6 @@ import { Context } from "../structures/commands/context";
 export const info: CommandInfo = {
   name: "leave",
   description: "Leaves the voice channel you are in and stops the radio.",
-  aliases: ["l", "exit", "stop", "quit"],
   noDM: true,
 };
 

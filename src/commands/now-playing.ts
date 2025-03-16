@@ -5,7 +5,6 @@ import { Context } from "../structures/commands/context";
 export const info: CommandInfo = {
   name: "playing",
   description: "Shows the currently playing song.",
-  aliases: ["np", "nowplaying", "current", "song"],
 };
 
 export default async (ctx: Context): Promise<void> => {
