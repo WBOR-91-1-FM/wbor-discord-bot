@@ -9,7 +9,7 @@ import { EventSource } from "eventsource";
 import { SSE_TRACK_FEED, STATION_ID } from "../constants";
 import { getCurrentShow } from "../spinitron";
 
-const UPDATE_SHOW_INTERVAL = 5 * 60 * 1000;
+const UPDATE_SHOW_INTERVAL = 1 * 60 * 1000;
 
 export class StateHandler extends EventEmitter {
   currentTrack: NowPlayingData;
