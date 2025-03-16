@@ -8,6 +8,7 @@ import {
   Guild,
   Message,
   MessagePayload,
+  MessageReplyOptions,
   TextChannel,
   User,
   VoiceBasedChannel,
@@ -41,5 +42,9 @@ export class Context {
 
   async answer(content: string | MessagePayload): Promise<Message> {
     return this.message.reply(content);
+  }
+
+  reply(data: string | MessagePayload | MessageReplyOptions): Promise<Message> {
+    return this.message.reply(data);
   }
 }

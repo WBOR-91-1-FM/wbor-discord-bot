@@ -49,6 +49,7 @@ export class CommandRegistry {
   async registerApplicationCommands(
     applicationId: string,
     token: string,
+    guildId?: string,
   ): Promise<void> {
     if (!applicationId || !token) {
       console.error(
@@ -82,14 +83,16 @@ export class CommandRegistry {
       try {
         const rest = new REST({ version: "10" }).setToken(token);
 
-        console.log(
-          `Started refreshing ${slashCommands.length} application (/) commands.`,
-        );
-
-        // Register global commands
-        const data = await rest.put(Routes.applicationCommands(applicationId), {
-          body: slashCommands,
-        });
+        const data = guildId
+          ? await rest.put(
+              Routes.applicationGuildCommands(applicationId, guildId),
+              {
+                body: slashCommands,
+              },
+            )
+          : await rest.put(Routes.applicationCommands(applicationId), {
+              body: slashCommands,
+            });
 
         console.log(
           `Successfully registered ${(data as any[]).length} application commands.`,
