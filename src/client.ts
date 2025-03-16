@@ -87,10 +87,20 @@ export class WBORClient extends Client {
     console.log(`Connected to Discord. Waiting until connected to Azuracast`);
     await this.stateHandler.waitForTrack();
 
+    // should we update the commands globally?
     if (process.env.UPDATE_COMMANDS === "true") {
       await commandRegistry.registerApplicationCommands(
         this.user!.id,
         process.env.BOT_TOKEN!,
+      );
+    }
+
+    // if there's a testing guild defined, update the commands there too
+    if (process.env.TESTING_GUILD) {
+      await commandRegistry.registerApplicationCommands(
+        this.user!.id,
+        process.env.BOT_TOKEN!,
+        process.env.TESTING_GUILD,
       );
     }
 
