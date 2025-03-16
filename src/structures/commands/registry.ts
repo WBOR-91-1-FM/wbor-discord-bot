@@ -57,7 +57,10 @@ export class CommandRegistry {
           .setName(command.info.name.toLowerCase())
           .setDescription(command.info.description);
 
-        slashCommands.push(slashCommand.toJSON());
+        const cmd = command.info.slashOptions
+          ? command.info.slashOptions(slashCommand)
+          : slashCommand;
+        slashCommands.push(cmd.toJSON());
       } catch (error) {
         console.error(
           `Failed to convert command ${command.info.name} to slash command:`,
