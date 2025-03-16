@@ -62,9 +62,9 @@ export const parsePage = (html: string): SpinitronShow => {
     host: currentShowHost,
     genre: currentShowGenre || null,
     image: currentShowImage!.startsWith("/")
-      ? `${SPINITRON_HOME_PAGE_URL}${currentShowImage}`
+      ? `${SPINITRON_HOME_PAGE_URL.replace("/WBOR", "")}${currentShowImage}`
       : currentShowImage!,
-    description: currentShowDescription,
+    description: currentShowDescription || "No description available.",
     timeslot: currentShowDate,
     isAutomationBear: currentShowTitle.startsWith("WBOR 91.1 FM"),
     upcomingShows: shows,
