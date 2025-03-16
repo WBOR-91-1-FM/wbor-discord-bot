@@ -1,6 +1,5 @@
 import { getVoiceConnection } from "@discordjs/voice";
 import * as radio from "../utils/radio";
-import * as GuildUtils from "../utils/guilds";
 import { CommandInfo } from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
 import { GuildMember } from "discord.js";
@@ -20,8 +19,6 @@ export default async (ctx: Context): Promise<void> => {
     );
     return;
   }
-
-  const guildData = GuildUtils.getForGuild(ctx.message.guild!.id);
 
   // we tell the bot to join this voice channel automatically later on
   ctx.guildEntity?.setVoiceChannel(member.voice.channel.id);

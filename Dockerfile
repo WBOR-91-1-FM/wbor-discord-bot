@@ -16,8 +16,8 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=dependencies /app/package.json ./package.json
 COPY src/ ./src/
 COPY index.ts ./
+COPY drizzle.config.ts ./
+COPY start.sh ./
 
-RUN mkdir -p /app/persist
-VOLUME ["/app/persist"]
-
-CMD ["bun", "run", "index.ts"]
+RUN chmod +x start.sh
+CMD ["./start.sh"]
