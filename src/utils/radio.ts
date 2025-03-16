@@ -62,6 +62,13 @@ function createFFmpegStream(url: string): AudioResource {
   });
 }
 
+export async function destroyStream() {
+  if (stream) {
+    stream.kill();
+    stream = null;
+  }
+}
+
 /**
  * Starts playing the radio in a voice channel
  * @param channel The voice channel to join
@@ -110,7 +117,12 @@ export async function playRadio(channel: VoiceBasedChannel): Promise<void> {
   player.on(AudioPlayerStatus.Idle, async () => {
     console.log("Player went idle, restarting stream...");
 
-    const newResource = createFFmpegStream(url);
+    let newResource = createFFmpegStream(url);
+    if (newResource.ended || !newResource.readable) {
+      // recreate the resource
+      await destroyStream();
+      newResource = createFFmpegStream(url);
+    }
 
     try {
       await entersState(connection, VoiceConnectionStatus.Ready, 5000);
