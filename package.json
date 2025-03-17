@@ -1,7 +1,7 @@
 {
   "name": "wbor-discord-bot",
   "version": "1.0.0",
-  "description": "A Discord bot for WBOR, inspired by Azuracast's Azuri",
+  "description": "A Discord bot for WBOR, inspired by AzuraCast's Azuri",
   "main": "inbox.js",
   "type": "module",
   "scripts": {

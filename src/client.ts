@@ -85,7 +85,7 @@ export class WBORClient extends Client {
   }
 
   async onReady() {
-    console.log(`Connected to Discord. Waiting until connected to Azuracast`);
+    console.log(`Connected to Discord. Waiting until connected to AzuraCast`);
     await this.stateHandler.waitForTrack();
 
     // should we update the commands globally?
@@ -109,7 +109,7 @@ export class WBORClient extends Client {
   }
 
   async onInteractionCreate(interaction: Interaction) {
-    // once a command gets in, it is likely that the bot is connected to Azuracast. but we must wait anyways to avoid any potential issues
+    // once a command gets in, it is likely that the bot is connected to AzuraCast. but we must wait anyways to avoid any potential issues
     await this.stateHandler.waitForTrack();
     if (!interaction.isChatInputCommand()) return;
 

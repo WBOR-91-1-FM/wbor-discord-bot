@@ -5,6 +5,7 @@
 This project is a fork of [Azuri](https://github.com/AzuraCast/Azuri). However, we've rewritten it using TypeScript and reorganized the codebase. Only some original code has been kept.
 
 ## TODO
+
 - [x] listen to the station on voice channels;
 - [x] show last played tracks, currently playing;
 - [x] migrate to typescript;
