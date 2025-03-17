@@ -8,7 +8,11 @@ export const CURRENT_SHOW_IMAGE_SELECTOR =
 
 /// Will return the description of the currently playing show.
 export const CURRENT_SHOW_DESCRIPTION_SELECTOR =
-  "body > div > div.main-container > div > div.view-page > div.onair > div > div.data > div > p";
+  "body > div > div.main-container > div > div.view-page > div.onair > div > div.data > div > p:nth-child(1)";
+
+/// Will return the featured artists, if any.
+export const CURRENT_SHOW_FEATURED_ARTISTS_SELECTOR =
+  "body > div > div.main-container > div > div.view-page > div.head.show > div.data > div > p:nth-child(2)";
 
 /// Will return the host of the currently playing show. WBOR's Commodore 64 for the automation playlist.
 export const CURRENT_SHOW_HOST_SELECTOR =

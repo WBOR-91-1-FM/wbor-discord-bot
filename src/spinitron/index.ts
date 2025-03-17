@@ -7,6 +7,7 @@ import {
   CURRENT_SHOW_TITLE_SELECTOR,
   CURRENT_SHOW_DESCRIPTION_SELECTOR,
   UPCOMING_SHOWS_TABLE_SELECTOR,
+  CURRENT_SHOW_FEATURED_ARTISTS_SELECTOR,
 } from "./selectors";
 import * as cheerio from "cheerio";
 import { SpinitronShow, SpinitronUpcomingShow } from "./types";
@@ -21,9 +22,13 @@ export const parsePage = (html: string): SpinitronShow => {
   const currentShowGenre = $(CURRENT_SHOW_GENRE_SELECTOR).text().trim();
   const currentShowImage = $(CURRENT_SHOW_IMAGE_SELECTOR).attr("src");
   const currentShowTitle = $(CURRENT_SHOW_TITLE_SELECTOR).text().trim();
-  let currentShowDescription = $(CURRENT_SHOW_DESCRIPTION_SELECTOR)
+  const currentShowDescription = $(CURRENT_SHOW_DESCRIPTION_SELECTOR)
     .text()
     .trim();
+  const currentShowFeaturedArtists = $(CURRENT_SHOW_FEATURED_ARTISTS_SELECTOR)
+    .text()
+    .trim()
+    .split(", ");
 
   const shows: SpinitronUpcomingShow[] = [];
   $(UPCOMING_SHOWS_TABLE_SELECTOR).each((index, el) => {
@@ -57,21 +62,6 @@ export const parsePage = (html: string): SpinitronShow => {
     });
   });
 
-  // after the last period of the description, you'll normally see what artists will be playing.
-  let featuredArtists: string[] | undefined = undefined;
-  const lastPeriodIndex = currentShowDescription.lastIndexOf(".");
-
-  if (lastPeriodIndex !== -1) {
-    featuredArtists = currentShowDescription
-      .substring(lastPeriodIndex + 1)
-      .split(", ");
-
-    currentShowDescription = currentShowDescription.substring(
-      0,
-      lastPeriodIndex + 1,
-    );
-  }
-
   return {
     title: currentShowTitle,
     host: currentShowHost,
@@ -83,7 +73,10 @@ export const parsePage = (html: string): SpinitronShow => {
     timeslot: currentShowDate,
     isAutomationBear: currentShowTitle.startsWith("WBOR 91.1 FM"),
     upcomingShows: shows,
-    featuredArtists,
+    featuredArtists:
+      currentShowFeaturedArtists.length > 0
+        ? currentShowFeaturedArtists
+        : undefined,
   };
 };
 
