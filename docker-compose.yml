@@ -8,6 +8,7 @@ services:
       - STATION_API_URL=https://azura.wbor.org/api/station/2
       - BOT_TOKEN=${BOT_TOKEN}
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+      - UPDATE_COMMANDS=true
     restart: unless-stopped
 
   postgres:
