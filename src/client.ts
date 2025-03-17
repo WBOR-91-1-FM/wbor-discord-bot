@@ -42,7 +42,6 @@ export class WBORClient extends Client {
     super({
       intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildVoiceStates,
       ],
