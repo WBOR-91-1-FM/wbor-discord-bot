@@ -4,7 +4,7 @@ export interface SpinitronUpcomingShow {
   /// The show timeslot.
   timeslot: string;
   /// The host of the show.
-  host: string;
+  host: string | null;
   /// The genre of the show.
   genre: string | null;
   /// If this is not a show, just the automated playlist.
@@ -19,15 +19,13 @@ export interface SpinitronShow {
   /// The show timeslot.
   timeslot: string;
   /// The host of the show.
-  host: string;
+  host: string | null;
   /// The genre of the show.
   genre: string | null;
   /// The image of the show.
-  image: string;
+  image: string | null;
   /// If this is not a show, just the automated playlist.
   isAutomationBear: boolean;
   /// The upcoming shows on the station.
   upcomingShows: SpinitronUpcomingShow[];
-  /// The featured artists, if any
-  featuredArtists?: string[];
 }

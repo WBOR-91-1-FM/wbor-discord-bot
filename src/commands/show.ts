@@ -27,11 +27,6 @@ export default async (ctx: Context) => {
           value: show.host,
         },
         {
-          name: "Featured Artists",
-          value: show.featuredArtists?.join?.(", ") as unknown as string,
-          inline: true,
-        },
-        {
           name: "Genre",
           value: show.genre as unknown as string,
           inline: true,

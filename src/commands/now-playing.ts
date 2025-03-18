@@ -12,8 +12,9 @@ export default async (ctx: Context): Promise<void> => {
   const song = ctx.client.currentSong;
   const show = ctx.client.currentShow;
 
-  // if the currently playing song doesn't have a cover, use the current show's image.
-  const songCover = song.art.includes("wbor.org") ? show.image : song.art;
+  // if the currently playing song doesn't have a cover, use the current show's image (unless the show doesn't have an image).
+  const songCover =
+    song.art.includes("wbor.org") && show.image ? show.image : song.art;
 
   let nowPlayingEmbed = new WBOREmbed()
     .setTitle(`Currently playing on ${STATION_CALL_SIGN}`)

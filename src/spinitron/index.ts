@@ -7,7 +7,6 @@ import {
   CURRENT_SHOW_TITLE_SELECTOR,
   CURRENT_SHOW_DESCRIPTION_SELECTOR,
   UPCOMING_SHOWS_TABLE_SELECTOR,
-  CURRENT_SHOW_FEATURED_ARTISTS_SELECTOR,
 } from "./selectors";
 import * as cheerio from "cheerio";
 import { SpinitronShow, SpinitronUpcomingShow } from "./types";
@@ -24,10 +23,6 @@ export const parsePage = (html: string): SpinitronShow => {
   const currentShowDescription = $(CURRENT_SHOW_DESCRIPTION_SELECTOR)
     .text()
     .trim();
-  const currentShowFeaturedArtists = $(CURRENT_SHOW_FEATURED_ARTISTS_SELECTOR)
-    .text()
-    .trim()
-    .split(", ");
 
   const shows: SpinitronUpcomingShow[] = [];
   $(UPCOMING_SHOWS_TABLE_SELECTOR).each((index, el) => {
@@ -64,23 +59,23 @@ export const parsePage = (html: string): SpinitronShow => {
 
   return {
     title: currentShowTitle,
-    host: currentShowHost,
-    genre: currentShowGenre || null,
-    image: currentShowImage!.startsWith("/")
-      ? `${SPINITRON_URL!.replace("/WBOR", "")}${currentShowImage}`
-      : currentShowImage!,
     description: currentShowDescription || "No description available.",
     timeslot: currentShowDate,
     isAutomationBear: currentShowTitle.startsWith(STATION_NAME),
     upcomingShows: shows,
-    featuredArtists:
-      currentShowFeaturedArtists.length > 0
-        ? currentShowFeaturedArtists
-        : undefined,
+    host: currentShowHost || null,
+    genre: currentShowGenre || null,
+    image: currentShowImage?.startsWith("/")
+      ? `https://${cleanSpinitronHost()}${currentShowImage}`
+      : currentShowImage || null,
   };
 };
 
 export const getCurrentShow = async () => {
   const html = await getPage();
   return parsePage(html);
+};
+
+export const cleanSpinitronHost = () => {
+  return new URL(SPINITRON_URL!).hostname;
 };
