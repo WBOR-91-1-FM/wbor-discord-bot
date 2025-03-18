@@ -1,4 +1,4 @@
-import { EMBED_COLOR, LOGO_URL } from "../constants.ts";
+import { EMBED_COLOR, LOGO_URL, STATION_NAME } from "../constants.ts";
 import { EmbedBuilder } from "discord.js";
 
 export default class WBOREmbed extends EmbedBuilder {
@@ -7,7 +7,7 @@ export default class WBOREmbed extends EmbedBuilder {
     this.setColor(EMBED_COLOR);
     this.setTimestamp();
     this.setAuthor({
-      name: "WBOR 91.1 FM",
+      name: STATION_NAME,
       iconURL: LOGO_URL,
     });
   }

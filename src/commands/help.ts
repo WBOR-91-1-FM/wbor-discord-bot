@@ -2,6 +2,7 @@ import WBOREmbed from "../structures/wbor-embed";
 import { commandRegistry } from "../structures/commands/registry";
 import { CommandInfo } from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
+import { STATION_CALL_SIGN } from "../constants";
 
 export const info: CommandInfo = {
   name: "help",
@@ -20,7 +21,7 @@ export default async (ctx: Context): Promise<void> => {
   });
 
   const commandsEmbed = new WBOREmbed()
-    .setTitle(`Welcome to WBOR`)
+    .setTitle(`Welcome to ${STATION_CALL_SIGN}`)
     .addFields(commands);
 
   ctx.message.reply({ embeds: [commandsEmbed] });

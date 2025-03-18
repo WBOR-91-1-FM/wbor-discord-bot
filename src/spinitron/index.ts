@@ -1,4 +1,4 @@
-import { SPINITRON_HOME_PAGE_URL } from "../constants";
+import { SPINITRON_HOME_PAGE_URL, STATION_NAME } from "../constants";
 import {
   CURRENT_SHOW_DATE_SELECTOR,
   CURRENT_SHOW_HOST_SELECTOR,
@@ -58,7 +58,8 @@ export const parsePage = (html: string): SpinitronShow => {
       title: showName,
       host: djNames.join(", "),
       genre,
-      isAutomationBear: showName.startsWith("WBOR 91.1 FM"),
+      // when the automation playlist's on, the title will start with WBOR 91.1 FM.
+      isAutomationBear: showName.startsWith(STATION_NAME),
     });
   });
 
@@ -71,7 +72,7 @@ export const parsePage = (html: string): SpinitronShow => {
       : currentShowImage!,
     description: currentShowDescription || "No description available.",
     timeslot: currentShowDate,
-    isAutomationBear: currentShowTitle.startsWith("WBOR 91.1 FM"),
+    isAutomationBear: currentShowTitle.startsWith(STATION_NAME),
     upcomingShows: shows,
     featuredArtists:
       currentShowFeaturedArtists.length > 0

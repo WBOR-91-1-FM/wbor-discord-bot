@@ -1,6 +1,7 @@
 import WBOREmbed from "../structures/wbor-embed";
 import { CommandInfo } from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
+import { STATION_CALL_SIGN } from "../constants";
 
 export const info: CommandInfo = {
   name: "playing",
@@ -15,7 +16,7 @@ export default async (ctx: Context): Promise<void> => {
   const songCover = song.art.includes("wbor.org") ? show.image : song.art;
 
   let nowPlayingEmbed = new WBOREmbed()
-    .setTitle(`Currently playing on WBOR`)
+    .setTitle(`Currently playing on ${STATION_CALL_SIGN}`)
     .addFields({
       name: song.artist,
       value: song.title,

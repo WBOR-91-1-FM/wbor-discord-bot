@@ -23,6 +23,11 @@ export const connectedChannels = new Set<string>();
 // Stream object for reuse
 let stream: ChildProcessWithoutNullStreams | null = null;
 
+// clean up the stream or else it takes ages to exit
+process.on("exit", () => {
+  destroyStream();
+});
+
 /**
  * Creates an FFmpeg stream for audio playback
  * @param url The URL of the audio stream

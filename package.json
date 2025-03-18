@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run index.ts",
-    "dev:start": "bun run --watch index.ts",
+    "dev": "bun run --watch index.ts",
     "db:push": "drizzle-kit push"
   },
   "repository": {
