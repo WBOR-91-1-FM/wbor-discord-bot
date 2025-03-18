@@ -1,10 +1,14 @@
 import WBOREmbed from "../structures/wbor-embed";
 import { CommandInfo } from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
+import { isShowFunctionalityAvailable } from "../constants";
 
 export const info: CommandInfo = {
   name: "show",
   description: "Sends what show is on air right now.",
+  // If any value in the array is false, the command will not be loaded.
+  // Therefore, it won't be registered and won't be available to use.
+  dependsOn: [isShowFunctionalityAvailable],
 };
 
 export default async (ctx: Context) => {

@@ -6,7 +6,11 @@ import { EventEmitter } from "events";
 import { NowPlayingData } from "../utils/wbor";
 import { SpinitronShow } from "../spinitron/types";
 import { EventSource } from "eventsource";
-import { SSE_TRACK_FEED, STATION_ID } from "../constants";
+import {
+  isShowFunctionalityAvailable,
+  SSE_TRACK_FEED,
+  STATION_ID,
+} from "../constants";
 import { getCurrentShow } from "../spinitron";
 
 const UPDATE_SHOW_INTERVAL = 1 * 60 * 1000;
@@ -21,7 +25,12 @@ export class StateHandler extends EventEmitter {
     this.currentTrack = null as unknown as NowPlayingData;
     this.currentShow = null as unknown as SpinitronShow;
     this.#connectToTrackSSE();
-    this.#setUpShowTrack();
+
+    if (isShowFunctionalityAvailable) this.#setUpShowTrack();
+    else
+      console.error(
+        "SPINITRON_URL not set, show functionality will be unavailable.",
+      );
   }
 
   waitForTrack() {

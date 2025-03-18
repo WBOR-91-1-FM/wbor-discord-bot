@@ -1,4 +1,4 @@
-import { SPINITRON_HOME_PAGE_URL, STATION_NAME } from "../constants";
+import { SPINITRON_URL, STATION_NAME } from "../constants";
 import {
   CURRENT_SHOW_DATE_SELECTOR,
   CURRENT_SHOW_HOST_SELECTOR,
@@ -12,8 +12,7 @@ import {
 import * as cheerio from "cheerio";
 import { SpinitronShow, SpinitronUpcomingShow } from "./types";
 
-export const getPage = () =>
-  fetch(SPINITRON_HOME_PAGE_URL).then((a) => a.text());
+export const getPage = () => fetch(SPINITRON_URL!).then((a) => a.text());
 
 export const parsePage = (html: string): SpinitronShow => {
   const $ = cheerio.load(html);
@@ -68,7 +67,7 @@ export const parsePage = (html: string): SpinitronShow => {
     host: currentShowHost,
     genre: currentShowGenre || null,
     image: currentShowImage!.startsWith("/")
-      ? `${SPINITRON_HOME_PAGE_URL.replace("/WBOR", "")}${currentShowImage}`
+      ? `${SPINITRON_URL!.replace("/WBOR", "")}${currentShowImage}`
       : currentShowImage!,
     description: currentShowDescription || "No description available.",
     timeslot: currentShowDate,

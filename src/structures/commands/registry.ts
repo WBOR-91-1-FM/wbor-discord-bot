@@ -17,6 +17,7 @@ export class CommandRegistry {
   }
 
   registerCommand(command: ImportedCommand): void {
+    if (!this.#shouldLoadCommand(command)) return;
     this.commands.push(command);
   }
 
@@ -94,6 +95,31 @@ export class CommandRegistry {
     } else {
       console.log("No commands were converted to slash commands.");
     }
+  }
+
+  shouldRunCommand(command: ImportedCommand, ctx: any): boolean {
+    if (!command.info.dependsOn) return true;
+
+    if (Array.isArray(command.info.dependsOn)) {
+      return command.info.dependsOn
+        .filter((condition) => typeof condition === "function")
+        .every((condition) => condition(ctx));
+    }
+
+    return true;
+  }
+
+  // Checks whether the command should be loaded, depending on the conditions set in the dependsOn property
+  #shouldLoadCommand(command: ImportedCommand): boolean {
+    if (!command.info.dependsOn) return true;
+
+    if (Array.isArray(command.info.dependsOn)) {
+      return command.info.dependsOn
+        .filter((condition) => typeof condition === "boolean")
+        .every((condition) => condition);
+    }
+
+    return true;
   }
 }
 

@@ -132,6 +132,12 @@ export class WBORClient extends Client {
       userEntity: new UserEntity(userData),
     });
 
+    if (!commandRegistry.shouldRunCommand(command, ctx))
+      return interaction.reply({
+        content: "☹️ Sorry, you don't have permission to run this command.",
+        flags: MessageFlags.Ephemeral,
+      });
+
     try {
       await command.default(ctx);
     } catch (error) {

@@ -14,9 +14,8 @@ export const SSE_TRACK_FEED =
   process.env.AZURACAST_SSE_URL ||
   "https://azura.wbor.org/api/live/nowplaying/sse";
 
-export const SPINITRON_HOME_PAGE_URL =
-  process.env.SPINITRON_URL ||
-  "https://playlists.wbor.org/WBOR/?layout=1";
+// No defaults because this can be disabled
+export const SPINITRON_URL = process.env.SPINITRON_URL;
 
 // The station ID for AzuraCast
 export const STATION_ID = process.env.AZURACAST_STATION_ID || "station:wbor";
@@ -24,3 +23,7 @@ export const STATION_ID = process.env.AZURACAST_STATION_ID || "station:wbor";
 export const STATION_CALL_SIGN = process.env.STATION_CALL_SIGN || "WBOR";
 
 export const STATION_NAME = process.env.STATION_NAME || "WBOR 91.1 FM";
+
+// Utilities
+// True if the Spinitron URL is set
+export const isShowFunctionalityAvailable = !!process.env.SPINITRON_URL;

@@ -11,6 +11,7 @@ export interface CommandInfo {
   devOnly?: boolean;
   noDM?: boolean;
   slashOptions?: (builder: SlashCommandBuilder) => any; // TODO: find a type that works here, currently there aren't any that are generic enough
+  dependsOn?: boolean[] | ((ctx: Context) => boolean)[]; // Array of conditions that must be met for the command to run. Literal booleans will be checked during startup; if any are false, the command will not be loaded.
 }
 
 export type CommandBody = (ctx: Context) => Promise<void>;
