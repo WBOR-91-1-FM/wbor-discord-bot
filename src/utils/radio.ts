@@ -162,7 +162,7 @@ export async function fetchStreamURL(): Promise<string> {
   // Return cached URL if available
   if (streamURL) return streamURL;
 
-  const response = await fetch(process.env.STATION_API_URL as string);
+  const response = await fetch(process.env.AZURACAST_API_URL as string);
   const data = await response.json();
 
   streamURL = data.mounts[0].url;
@@ -191,7 +191,7 @@ export async function updateChannelStatus(
     await fetch(`https://discord.com/api/v9/channels/${id}/voice-status`, {
       headers: {
         accept: "*/*",
-        authorization: `Bot ${process.env.BOT_TOKEN}`,
+        authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
         "content-type": "application/json",
       },
       body: JSON.stringify({ status: status }),

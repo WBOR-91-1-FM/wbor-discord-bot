@@ -6,8 +6,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
-      - UPDATE_COMMANDS=true
-      - TZ=America/New_York
+      - DISCORD_UPDATE_COMMANDS
+      - TZ
     env_file:
       - .env
     restart: unless-stopped

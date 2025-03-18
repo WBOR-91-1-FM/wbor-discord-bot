@@ -85,19 +85,19 @@ export class WBORClient extends Client {
     await this.stateHandler.waitForTrack();
 
     // should we update the commands globally?
-    if (process.env.UPDATE_COMMANDS === "true") {
+    if (process.env.DISCORD_UPDATE_COMMANDS === "true") {
       await commandRegistry.registerApplicationCommands(
         this.user!.id,
-        process.env.BOT_TOKEN!,
+        process.env.DISCORD_BOT_TOKEN!,
       );
     }
 
     // if there's a testing guild defined, update the commands there too
-    if (process.env.TESTING_GUILD) {
+    if (process.env.DISCORD_TESTING_GUILD) {
       await commandRegistry.registerApplicationCommands(
         this.user!.id,
-        process.env.BOT_TOKEN!,
-        process.env.TESTING_GUILD,
+        process.env.DISCORD_BOT_TOKEN!,
+        process.env.DISCORD_TESTING_GUILD,
       );
     }
 
