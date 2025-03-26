@@ -17,7 +17,7 @@ export default async (ctx: Context): Promise<void> => {
   const songs: string[] = [];
 
   songs.push(
-    `**NOW**: **${data.now_playing.song.artist}** - ${data.now_playing.song.title}\n`,
+    `**🎙️ NOW**: **${data.now_playing.song.artist}** - ${data.now_playing.song.title}\n`,
   );
 
   data.song_history.forEach((song) => {
