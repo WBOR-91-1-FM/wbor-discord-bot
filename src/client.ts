@@ -8,7 +8,7 @@ import {
 import StateHandler from './structures/state-handler';
 import { commandRegistry } from './structures/commands/registry';
 import Context from './structures/commands/context';
-import { logError } from './utils/misc';
+import { cleanTrackTitle, logError } from './utils/misc';
 import {
   playRadio,
   updateAllChannelStatuses,
@@ -47,10 +47,15 @@ export default class WBORClient extends Client {
   }
 
   get songPresenceText() {
-    // remove [], () and anything in between on the title
-    const title = this.currentSong.title.replace(/\[.*?]|\(.*?\)/g, '').trim();
+    // remove metadata stuff from the track title
+    const title = cleanTrackTitle(this.currentSong.title);
+    // add " to the shot name if not present
+    const quotedShowName = this.currentShow.title.startsWith('"')
+      ? this.currentShow.title
+      : `"${this.currentShow.title}"`;
+
     if (!this.currentShow.isAutomationBear) {
-      return `${this.currentSong.artist} - ${title}, on ${this.currentShow.title} with ${this.currentShow.host} 📻`;
+      return `${this.currentSong.artist} - ${title} • ${quotedShowName}, with ${this.currentShow.host} 📻`;
     }
     return `${this.currentSong.artist} - ${this.currentSong.title} 🎶`;
   }

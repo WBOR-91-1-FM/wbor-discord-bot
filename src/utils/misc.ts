@@ -1,4 +1,5 @@
 import fs from 'fs';
+import * as metadataFilter from '@web-scrobbler/metadata-filter';
 
 /**
  * Pads a time value with leading zeros if needed
@@ -53,4 +54,29 @@ export function logError(time: Date, content: string | Error): void {
   }
 
   console.error(errorContent);
+}
+
+const filterSet = {
+  track: [
+    metadataFilter.removeLive,
+    metadataFilter.removeParody,
+    metadataFilter.removeVersion,
+    metadataFilter.removeRemastered,
+    metadataFilter.removeZeroWidth,
+    metadataFilter.removeCleanExplicit,
+    metadataFilter.removeReissue,
+    metadataFilter.removeFeature,
+    metadataFilter.fixTrackSuffix,
+  ],
+};
+
+const filter = metadataFilter.createFilter(filterSet);
+
+/**
+ * Cleans up track titles using web-scrobbler/metadata-filter. Used on presence updates.
+ * @param title The title to clean up
+ * @returns Cleaned up title
+ */
+export function cleanTrackTitle(title: string): string {
+  return filter.filterField('track', title);
 }
