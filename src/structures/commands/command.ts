@@ -1,8 +1,8 @@
 /*
  * What's expected from the command files that we load.
  */
-import { SlashCommandBuilder, SlashCommandSubcommandBuilder } from "discord.js";
-import { Context } from "./context";
+import { SlashCommandBuilder } from 'discord.js';
+import { Context } from './context';
 
 export interface CommandInfo {
   name: string;
@@ -10,8 +10,13 @@ export interface CommandInfo {
   private?: boolean;
   devOnly?: boolean;
   noDM?: boolean;
-  slashOptions?: (builder: SlashCommandBuilder) => any; // TODO: find a type that works here, currently there aren't any that are generic enough
-  dependsOn?: boolean[] | ((ctx: Context) => boolean)[]; // Array of conditions that must be met for the command to run. Literal booleans will be checked during startup; if any are false, the command will not be loaded.
+
+  // TODO: find a type that works here, currently there aren't any that are generic enough
+  slashOptions?: (builder: SlashCommandBuilder) => any;
+
+  // Array of conditions that must be met for the command to run.
+  // Literal booleans will be checked during startup; if any are false, the command won't be loaded.
+  dependsOn?: boolean[] | ((ctx: Context) => boolean)[];
 }
 
 export type CommandBody = (ctx: Context) => Promise<void>;

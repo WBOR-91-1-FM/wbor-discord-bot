@@ -1,10 +1,10 @@
-import WBOREmbed from "../structures/wbor-embed";
-import type {CommandInfo} from "../structures/commands/command";
-import { Context } from "../structures/commands/context";
+import WBOREmbed from '../structures/wbor-embed';
+import type { CommandInfo } from '../structures/commands/command';
+import type Context from '../structures/commands/context';
 
 export const info: CommandInfo = {
-  name: "recent",
-  description: "Displays the recently played tracks on the station.",
+  name: 'recent',
+  description: 'Displays the recently played tracks on the station.',
 };
 
 export default async (ctx: Context): Promise<void> => {
@@ -12,7 +12,7 @@ export default async (ctx: Context): Promise<void> => {
 
   const recentlyPlayed = new WBOREmbed()
     .setThumbnail(data.now_playing.song.art)
-    .setTitle(`Recently played tracks`);
+    .setTitle('Recently played tracks');
 
   const songs: string[] = [];
 
@@ -23,9 +23,9 @@ export default async (ctx: Context): Promise<void> => {
   data.song_history.forEach((song) => {
     // convert unix timestamp to hh:mm in the 12-hour format
     const playedAt = new Date(song.played_at * 1000);
-    const formattedTime = playedAt.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "numeric",
+    const formattedTime = playedAt.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
       hour12: true,
     });
 
@@ -34,7 +34,7 @@ export default async (ctx: Context): Promise<void> => {
     );
   });
 
-  recentlyPlayed.setDescription(songs.join("\n"));
+  recentlyPlayed.setDescription(songs.join('\n'));
   recentlyPlayed.setTimestamp();
 
   await ctx.message.reply({ embeds: [recentlyPlayed] });

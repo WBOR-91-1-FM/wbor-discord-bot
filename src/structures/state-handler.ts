@@ -1,22 +1,24 @@
 /*
- * Basically tracks changes on the currently playing song and the current show, and uses EventEmitter so the bot can react to these changes.
+ * Basically tracks changes on the currently playing song and the current show,
+ * and uses EventEmitter so the bot can react to these changes.
  */
 
-import { EventEmitter } from "events";
-import type {NowPlayingData} from "../utils/wbor";
-import type {SpinitronShow} from "../spinitron/types";
-import { EventSource } from "eventsource";
+import { EventEmitter } from 'events';
+import { EventSource } from 'eventsource';
+import type { NowPlayingData } from '../utils/wbor';
+import type { SpinitronShow } from '../spinitron/types';
 import {
   isShowFunctionalityAvailable,
   SSE_TRACK_FEED,
   STATION_ID,
-} from "../constants";
-import { getCurrentShow } from "../spinitron";
+} from '../constants';
+import { getCurrentShow } from '../spinitron';
 
 const UPDATE_SHOW_INTERVAL = 1 * 60 * 1000;
 
-export class StateHandler extends EventEmitter {
+export default class StateHandler extends EventEmitter {
   currentTrack: NowPlayingData;
+
   currentShow: SpinitronShow;
 
   constructor() {
@@ -27,10 +29,11 @@ export class StateHandler extends EventEmitter {
     this.#connectToTrackSSE();
 
     if (isShowFunctionalityAvailable) this.#setUpShowTrack();
-    else
+    else {
       console.error(
-        "SPINITRON_URL not set, show functionality will be unavailable.",
+        'SPINITRON_URL not set, show functionality will be unavailable.',
       );
+    }
   }
 
   waitForTrack() {
@@ -39,7 +42,7 @@ export class StateHandler extends EventEmitter {
     }
 
     return new Promise<NowPlayingData>((resolve) => {
-      this.once("trackChange", resolve);
+      this.once('trackChange', resolve);
     });
   }
 
@@ -49,8 +52,8 @@ export class StateHandler extends EventEmitter {
     }
 
     return new Promise<SpinitronShow>((resolve) => {
-      this.once("showChange", resolve);
-    })
+      this.once('showChange', resolve);
+    });
   }
 
   async #setUpShowTrack() {
@@ -59,7 +62,7 @@ export class StateHandler extends EventEmitter {
     if (!this.#areShowsTheSame(show)) {
       console.log(`WBOR is now airing ${show.title}, by ${show.host}`);
       this.currentShow = show;
-      this.emit("showChange", show);
+      this.emit('showChange', show);
     }
 
     setTimeout(() => this.#setUpShowTrack(), UPDATE_SHOW_INTERVAL + 1000);
@@ -68,15 +71,15 @@ export class StateHandler extends EventEmitter {
   #areShowsTheSame(show: SpinitronShow) {
     if (!this.currentShow) return false;
     return (
-      this.currentShow?.title === show.title ||
-      this.currentShow?.host === show.host
+      this.currentShow?.title === show.title
+      || this.currentShow?.host === show.host
     );
   }
 
   #connectToTrackSSE() {
     const url = SSE_TRACK_FEED;
 
-    let subs: Record<string, any> = {};
+    const subs: Record<string, any> = {};
     subs[STATION_ID] = { recover: true };
 
     const data = new URLSearchParams({
@@ -91,16 +94,15 @@ export class StateHandler extends EventEmitter {
   }
 
   #setUpSSEEvents(es: EventSource) {
-    es.addEventListener("message", (data) => {
+    es.addEventListener('message', (data) => {
       const parsedData = JSON.parse(data.data);
 
       if (parsedData.connect) this.#onSSEReady(parsedData);
-      else if (parsedData.pub?.data?.np)
-        this.#onSSENewTrack(parsedData.pub.data);
+      else if (parsedData.pub?.data?.np) this.#onSSENewTrack(parsedData.pub.data);
     });
 
-    es.addEventListener("error", (error) => {
-      console.error("EventSource error:", error);
+    es.addEventListener('error', (error) => {
+      console.error('EventSource error:', error);
     });
   }
 
@@ -123,16 +125,16 @@ export class StateHandler extends EventEmitter {
       );
 
       this.currentTrack = npPayload;
-      this.emit("trackChange", npPayload);
+      this.emit('trackChange', npPayload);
     }
   }
 
   #areTracksTheSame(song: NowPlayingData) {
     if (!this.currentTrack) return false;
     return (
-      this.currentTrack.now_playing.song.title ===
-        song.now_playing.song.title &&
-      this.currentTrack.now_playing.song.art === song.now_playing.song.art
+      this.currentTrack.now_playing.song.title
+        === song.now_playing.song.title
+      && this.currentTrack.now_playing.song.art === song.now_playing.song.art
     );
   }
 }

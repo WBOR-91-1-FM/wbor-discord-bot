@@ -1,6 +1,6 @@
-import { users } from "../schemas/user";
-import { db } from "..";
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
+import users from '../schemas/user';
+import db from '..';
 
 export const getOrCreateUser = async (userId: string) => {
   const existingUser = await db

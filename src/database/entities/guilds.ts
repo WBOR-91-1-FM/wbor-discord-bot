@@ -1,6 +1,6 @@
-import { guilds } from "../schemas/guild";
-import { db } from "..";
-import { eq, isNotNull, not } from "drizzle-orm";
+import { eq, isNotNull } from 'drizzle-orm';
+import guilds from '../schemas/guild';
+import db from '..';
 
 export const getOrCreateGuild = async (guildId: string) => {
   const existingGuild = await db

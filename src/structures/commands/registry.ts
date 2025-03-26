@@ -2,10 +2,12 @@
  * Loads commands dynamically, registers them with the Discord API, etc
  */
 
-import fs from "fs";
-import path from "path";
-import { SlashCommandBuilder, REST, Routes, Client } from "discord.js";
-import type {ImportedCommand} from "./command";
+import fs from 'fs';
+import path from 'path';
+import {
+  SlashCommandBuilder, REST, Routes,
+} from 'discord.js';
+import type { ImportedCommand } from './command';
 
 export class CommandRegistry {
   public commands: ImportedCommand[];
@@ -26,13 +28,14 @@ export class CommandRegistry {
   }
 
   async loadCommands(): Promise<void> {
-    const commandFiles = fs.readdirSync("./src/commands");
-    for (const file of commandFiles) {
-      const pat = path.resolve("./src/commands", file);
+    const commandFiles = fs.readdirSync('./src/commands');
+    commandFiles.map(async (file) => {
+      const pat = path.resolve('./src/commands', file);
       const command = await import(pat);
       this.registerCommand(command);
-    }
-    console.log("Loaded", commandFiles.length, "commands");
+    });
+
+    console.log('Loaded', commandFiles.length, 'commands');
   }
 
   async registerApplicationCommands(
@@ -42,7 +45,7 @@ export class CommandRegistry {
   ): Promise<void> {
     if (!applicationId || !token) {
       console.error(
-        "Application ID and token are required to register slash commands",
+        'Application ID and token are required to register slash commands',
       );
       return;
     }
@@ -50,8 +53,8 @@ export class CommandRegistry {
     const slashCommands: any[] = [];
 
     // Convert each command to a slash command
-    for (const command of this.commands) {
-      if (command.info.private) continue;
+    this.commands.forEach((command) => {
+      if (command.info.private) return;
 
       try {
         const slashCommand = new SlashCommandBuilder()
@@ -68,54 +71,56 @@ export class CommandRegistry {
           error,
         );
       }
-    }
+    });
 
     // Register slash commands with Discord API
     if (slashCommands.length > 0) {
       try {
-        const rest = new REST({ version: "10" }).setToken(token);
+        const rest = new REST({ version: '10' }).setToken(token);
 
         const data = guildId
           ? await rest.put(
-              Routes.applicationGuildCommands(applicationId, guildId),
-              {
-                body: slashCommands,
-              },
-            )
-          : await rest.put(Routes.applicationCommands(applicationId), {
+            Routes.applicationGuildCommands(applicationId, guildId),
+            {
               body: slashCommands,
-            });
+            },
+          )
+          : await rest.put(Routes.applicationCommands(applicationId), {
+            body: slashCommands,
+          });
 
         console.log(
           `Successfully registered ${(data as any[]).length} application commands.`,
         );
       } catch (error) {
-        console.error("Error registering slash commands:", error);
+        console.error('Error registering slash commands:', error);
       }
     } else {
-      console.log("No commands were converted to slash commands.");
+      console.log('No commands were converted to slash commands.');
     }
   }
 
+  // eslint-disable-next-line class-methods-use-this
   shouldRunCommand(command: ImportedCommand, ctx: any): boolean {
     if (!command.info.dependsOn) return true;
 
     if (Array.isArray(command.info.dependsOn)) {
       return command.info.dependsOn
-        .filter((condition) => typeof condition === "function")
+        .filter((condition) => typeof condition === 'function')
         .every((condition) => condition(ctx));
     }
 
     return true;
   }
 
-  // Checks whether the command should be loaded, depending on the conditions set in the dependsOn property
+  // Checks whether the command should be loaded, depending on the conditions set in the dependsOn.
+  // eslint-disable-next-line class-methods-use-this
   #shouldLoadCommand(command: ImportedCommand): boolean {
     if (!command.info.dependsOn) return true;
 
     if (Array.isArray(command.info.dependsOn)) {
       return command.info.dependsOn
-        .filter((condition) => typeof condition === "boolean")
+        .filter((condition) => typeof condition === 'boolean')
         .every((condition) => condition);
     }
 

@@ -1,4 +1,4 @@
-import { WBOR_API_URL } from "../constants";
+import { WBOR_API_URL } from '../constants';
 
 // Define the interfaces for the response data structure
 export interface Song {

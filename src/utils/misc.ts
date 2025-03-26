@@ -1,24 +1,4 @@
-import fs from "fs";
-
-/**
- * Converts a Unix timestamp to a time string in the specified timezone
- * @param time Unix timestamp in seconds
- * @param timezone The timezone to convert to (default: "America/New_York")
- * @returns Formatted time string in HH:MM format
- */
-export function unixConvert(
-  time: number,
-  timezone: string = "America/New_York",
-): string {
-  if (!timezone) timezone = "UTC";
-
-  const convertedTime = new Date(time * 1000).toLocaleString("en-US", {
-    timeZone: timezone,
-  });
-
-  const dateObj = new Date(convertedTime);
-  return `${padTime(dateObj.getHours())}:${padTime(dateObj.getMinutes())}`;
-}
+import fs from 'fs';
 
 /**
  * Pads a time value with leading zeros if needed
@@ -29,10 +9,28 @@ export function padTime(time: number): string {
   let t = time.toString();
 
   while (t.length < 2) {
-    t = "0" + t;
+    t = `0${t}`;
   }
 
   return t;
+}
+
+/**
+ * Converts a Unix timestamp to a time string in the specified timezone
+ * @param time Unix timestamp in seconds
+ * @param timezone The timezone to convert to (default: "America/New_York")
+ * @returns Formatted time string in HH:MM format
+ */
+export function unixConvert(
+  time: number,
+  timezone: string = 'America/New_York',
+): string {
+  const convertedTime = new Date(time * 1000).toLocaleString('en-US', {
+    timeZone: timezone,
+  });
+
+  const dateObj = new Date(convertedTime);
+  return `${padTime(dateObj.getHours())}:${padTime(dateObj.getMinutes())}`;
 }
 
 /**
@@ -42,8 +40,7 @@ export function padTime(time: number): string {
  */
 export function logError(time: Date, content: string | Error): void {
   // Convert Error objects to string if needed
-  const errorContent =
-    content instanceof Error ? `${content.message}\n${content.stack}` : content;
+  const errorContent = content instanceof Error ? `${content.message}\n${content.stack}` : content;
 
   if (process.env.LOG_PATH) {
     fs.appendFile(

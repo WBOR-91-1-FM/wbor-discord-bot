@@ -1,10 +1,10 @@
-import { STATION_CALL_SIGN, WBOR_API_URL } from "../constants";
-import type {CommandInfo} from "../structures/commands/command";
-import { Context } from "../structures/commands/context";
+import { STATION_CALL_SIGN, WBOR_API_URL } from '../constants';
+import type { CommandInfo } from '../structures/commands/command';
+import type Context from '../structures/commands/context';
 
 export const info: CommandInfo = {
-  name: "listeners",
-  description: "Displays the current listener count and bot statistics.",
+  name: 'listeners',
+  description: 'Displays the current listener count and bot statistics.',
 };
 
 export default async (ctx: Context): Promise<void> => {

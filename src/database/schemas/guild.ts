@@ -1,7 +1,6 @@
-import { pgTable, text } from "drizzle-orm/pg-core";
-import { db } from "../index";
+import { pgTable, text } from 'drizzle-orm/pg-core';
 
-export const guilds = pgTable("guilds", {
-  id: text("guildId").primaryKey().notNull(),
-  voiceChannelId: text("voiceChannelId"),
+export default pgTable('guilds', {
+  id: text('guildId').primaryKey().notNull(),
+  voiceChannelId: text('voiceChannelId'),
 });

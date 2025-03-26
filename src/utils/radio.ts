@@ -8,12 +8,12 @@ import {
   getVoiceConnection,
   AudioPlayerStatus,
   entersState,
-  AudioResource
-} from "@discordjs/voice";
-import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
-import { Client, type VoiceBasedChannel, Guild } from "discord.js";
-import { WBORClient } from "../client";
-import type {Song} from "./wbor";
+  AudioResource,
+} from '@discordjs/voice';
+import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import { Client, type VoiceBasedChannel } from 'discord.js';
+import type { WBORClient } from '../client';
+import type { Song } from './wbor';
 
 // Track connected channels
 export const connectedChannels = new Set<string>();
@@ -21,39 +21,33 @@ export const connectedChannels = new Set<string>();
 // Stream object for reuse
 let stream: ChildProcessWithoutNullStreams | null = null;
 
-// clean up the stream or else it takes ages to exit
-process.on("exit", () => {
-  destroyStream();
-});
-
 /**
  * Creates an FFmpeg stream for audio playback
  * @param url The URL of the audio stream
  * @returns Audio resource for playback
  */
 function createFFmpegStream(url: string): AudioResource {
-  const ffmpeg =
-    stream ||
-    spawn("ffmpeg", [
-      "-reconnect",
-      "1",
-      "-reconnect_streamed",
-      "1",
-      "-reconnect_delay_max",
-      "5",
-      "-i",
+  const ffmpeg = stream
+    || spawn('ffmpeg', [
+      '-reconnect',
+      '1',
+      '-reconnect_streamed',
+      '1',
+      '-reconnect_delay_max',
+      '5',
+      '-i',
       url,
-      "-f",
-      "mp3",
-      "-ar",
-      "48000",
-      "-ac",
-      "2",
-      "-bufsize",
-      "1024k",
-      "-loglevel",
-      "error",
-      "pipe:1",
+      '-f',
+      'mp3',
+      '-ar',
+      '48000',
+      '-ac',
+      '2',
+      '-bufsize',
+      '1024k',
+      '-loglevel',
+      'error',
+      'pipe:1',
     ]);
 
   if (!stream) {
@@ -70,6 +64,39 @@ export async function destroyStream() {
     stream.kill();
     stream = null;
   }
+}
+
+// clean up the stream or else it takes ages to exit
+process.on('exit', destroyStream);
+
+/**
+ * Stops playing radio in a guild
+ * @param guildId The ID of the guild
+ */
+function stopPlaying(guildId: string): void {
+  const connection = getVoiceConnection(guildId);
+  if (connection) {
+    connection.destroy();
+  }
+}
+
+// Cache for stream URL
+let streamURL: string | undefined;
+
+/**
+ * Fetches the stream URL from the API
+ * @returns The URL of the audio stream
+ */
+export async function fetchStreamURL(): Promise<string> {
+  // Return cached URL if available
+  if (streamURL) return streamURL;
+
+  const response = await fetch(process.env.AZURACAST_API_URL as string);
+  const data = await response.json() as { mounts: { url: string }[] };
+
+  streamURL = data.mounts[0]!.url;
+  console.log(`Using stream URL: ${streamURL}`);
+  return streamURL!;
 }
 
 /**
@@ -112,56 +139,26 @@ export async function playRadio(channel: VoiceBasedChannel): Promise<void> {
   const resource = createFFmpegStream(url);
 
   // Add error handling for the player
-  player.on("error", (error) => {
-    console.error("Player error:", error);
+  player.on('error', (error) => {
+    console.error('Player error:', error);
   });
 
   // Handle player idling (stream ends)
   player.on(AudioPlayerStatus.Idle, async () => {
-    console.log("Player went idle, restarting stream...");
+    console.log('Player went idle, restarting stream...');
 
-    await destroyStream()
-    let newResource = createFFmpegStream(url);
+    await destroyStream();
+    const newResource = createFFmpegStream(url);
 
     try {
       await entersState(connection, VoiceConnectionStatus.Ready, 5000);
       player.play(newResource);
-    } catch (error) {}
+    } catch (error) { /* empty */ }
   });
 
   // Start playing
   player.play(resource);
   connectedChannels.add(channel.id);
-}
-
-/**
- * Stops playing radio in a guild
- * @param guildId The ID of the guild
- */
-function stopPlaying(guildId: string): void {
-  const connection = getVoiceConnection(guildId);
-  if (connection) {
-    connection.destroy();
-  }
-}
-
-// Cache for stream URL
-let streamURL: string | undefined;
-
-/**
- * Fetches the stream URL from the API
- * @returns The URL of the audio stream
- */
-export async function fetchStreamURL(): Promise<string> {
-  // Return cached URL if available
-  if (streamURL) return streamURL;
-
-  const response = await fetch(process.env.AZURACAST_API_URL as string);
-  const data = await response.json() as { mounts: { url: string }[] };
-
-  streamURL = data.mounts[0]!.url;
-  console.log(`Using stream URL: ${streamURL}`);
-  return streamURL!;
 }
 
 /**
@@ -184,15 +181,15 @@ export async function updateChannelStatus(
     // Undocumented Discord API for setting voice channel status
     await fetch(`https://discord.com/api/v9/channels/${id}/voice-status`, {
       headers: {
-        accept: "*/*",
+        accept: '*/*',
         authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
-        "content-type": "application/json",
+        'content-type': 'application/json',
       },
-      body: JSON.stringify({ status: status }),
-      method: "PUT",
+      body: JSON.stringify({ status }),
+      method: 'PUT',
     });
   } catch (error) {
-    console.error("Error updating channel status:", error);
+    console.error('Error updating channel status:', error);
   }
 }
 
@@ -204,11 +201,9 @@ export async function updateAllChannelStatuses(
   song: Song,
 ): Promise<void> {
   await Promise.allSettled(
-    Array.from(connectedChannels).map((id) =>
-      updateChannelStatus(client, id, song).catch((error) => {
-        console.error(`Error updating channel status for ${id}:`, error);
-        connectedChannels.delete(id);
-      }),
-    ),
+    Array.from(connectedChannels).map((id) => updateChannelStatus(client, id, song).catch((err) => {
+      console.error(`Error updating channel status for ${id}:`, err);
+      connectedChannels.delete(id);
+    })),
   );
 }

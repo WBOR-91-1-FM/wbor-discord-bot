@@ -3,26 +3,26 @@ import {
   Client,
   GatewayIntentBits,
   type Interaction,
-  MessageFlags,
-} from "discord.js";
-import { StateHandler } from "./structures/state-handler";
-import { commandRegistry } from "./structures/commands/registry";
-import { Context } from "./structures/commands/context";
-import { logError } from "./utils/misc";
+  MessageFlags, type VoiceBasedChannel,
+} from 'discord.js';
+import StateHandler from './structures/state-handler';
+import { commandRegistry } from './structures/commands/registry';
+import Context from './structures/commands/context';
+import { logError } from './utils/misc';
 import {
   playRadio,
   updateAllChannelStatuses,
   updateChannelStatus,
-} from "./utils/radio";
-import type {NowPlayingData} from "./utils/wbor";
+} from './utils/radio';
+import type { NowPlayingData } from './utils/wbor';
 import {
   getAllExistingVoiceChannels,
   getOrCreateGuild,
   GuildEntity,
-} from "./database/entities/guilds";
-import { getOrCreateUser, UserEntity } from "./database/entities/users";
+} from './database/entities/guilds';
+import { getOrCreateUser, UserEntity } from './database/entities/users';
 
-export class WBORClient extends Client {
+export default class WBORClient extends Client {
   stateHandler = new StateHandler();
 
   get currentNowPlaying() {
@@ -42,15 +42,13 @@ export class WBORClient extends Client {
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
     });
 
-    this.on("ready", () => this.onReady());
-    this.on("interactionCreate", (interaction) =>
-      this.onInteractionCreate(interaction),
-    );
+    this.on('ready', () => this.onReady());
+    this.on('interactionCreate', (interaction) => this.onInteractionCreate(interaction));
   }
 
   get songPresenceText() {
     // remove [], () and anything in between on the title
-    const title = this.currentSong.title.replace(/\[.*?]|\(.*?\)/g, "").trim();
+    const title = this.currentSong.title.replace(/\[.*?]|\(.*?\)/g, '').trim();
     if (!this.currentShow.isAutomationBear) {
       return `${this.currentSong.artist} - ${title}, on ${this.currentShow.title} with ${this.currentShow.host} 📻`;
     }
@@ -62,41 +60,39 @@ export class WBORClient extends Client {
   }
 
   setUpPresenceUpdates() {
-    this.stateHandler.on("trackChange", async (np: NowPlayingData) => {
+    this.stateHandler.on('trackChange', async (np: NowPlayingData) => {
       this.updatePresence();
       await updateAllChannelStatuses(this, np.now_playing.song);
     });
 
-    this.stateHandler.on("showChange", () => this.updatePresence())
+    this.stateHandler.on('showChange', () => this.updatePresence());
   }
 
   async joinChannels() {
     const voiceChannels = await getAllExistingVoiceChannels();
 
-    for (const vc of voiceChannels) {
-      const channel = await this.channels.fetch(vc!);
-      if (!channel?.isVoiceBased()) continue;
+    voiceChannels.map(async (vc) => {
+      const channel = await this.channels.fetch(vc!) as VoiceBasedChannel;
+      if (!channel || !channel?.isVoiceBased()) return;
 
       await playRadio(channel)
         .then(() => updateChannelStatus(this, channel.id, this.currentSong))
-        .catch((err) =>
-          console.error(
-            `failed to play radio in ${channel.name} (${channel.id})`,
-            err,
-          ),
-        );
-    }
+        .catch((err) => console.error(
+          `failed to play radio in ${channel.name} (${channel.id})`,
+          err,
+        ));
+    });
   }
 
   async onReady() {
-    console.log(`Connected to Discord. Waiting until connected to AzuraCast`);
+    console.log('Connected to Discord. Waiting until connected to AzuraCast');
     await this.stateHandler.waitForTrack();
     await this.stateHandler.waitForShow();
     this.updatePresence();
     this.setUpPresenceUpdates();
 
     // should we update the commands globally?
-    if (process.env.DISCORD_UPDATE_COMMANDS === "true") {
+    if (process.env.DISCORD_UPDATE_COMMANDS === 'true') {
       await commandRegistry.registerApplicationCommands(
         this.user!.id,
         process.env.DISCORD_BOT_TOKEN!,
@@ -116,22 +112,27 @@ export class WBORClient extends Client {
   }
 
   async onInteractionCreate(interaction: Interaction) {
-    // once a command gets in, it is likely that the bot is connected to AzuraCast. but we must wait anyways to avoid any potential issues
+    // once a command gets in, it is likely that the bot is connected to AzuraCast.
+    // but we must wait anyway to avoid any potential issues
     await this.stateHandler.waitForTrack();
     if (!interaction.isChatInputCommand()) return;
 
     const command = commandRegistry.findByName(interaction.commandName);
-    if (!command)
-      return interaction.reply({
+    if (!command) {
+      await interaction.reply({
         content: "🤔 Sorry, this command doesn't seem to exist.",
         flags: MessageFlags.Ephemeral,
       });
+      return;
+    }
 
-    if (command.info.noDM && interaction.channel?.isDMBased())
-      return interaction.reply({
-        content: "☹️ Sorry, this command cannot be used in DMs.",
+    if (command.info.noDM && interaction.channel?.isDMBased()) {
+      await interaction.reply({
+        content: '☹️ Sorry, this command cannot be used in DMs.',
         flags: MessageFlags.Ephemeral,
       });
+      return;
+    }
 
     const userData = await getOrCreateUser(interaction.user.id);
     const guildData = interaction.channel?.isDMBased()
@@ -143,24 +144,26 @@ export class WBORClient extends Client {
       userEntity: new UserEntity(userData!),
     });
 
-    if (!commandRegistry.shouldRunCommand(command, ctx))
-      return interaction.reply({
+    if (!commandRegistry.shouldRunCommand(command, ctx)) {
+      await interaction.reply({
         content: "☹️ Sorry, you don't have permission to run this command.",
         flags: MessageFlags.Ephemeral,
       });
+      return;
+    }
 
     try {
       await command.default(ctx);
     } catch (error: any) {
       logError(new Date(), error);
-      interaction.reply({
-        content: "☹️ Sorry, an error occurred while executing this command.",
+      await interaction.reply({
+        content: '☹️ Sorry, an error occurred while executing this command.',
         flags: MessageFlags.Ephemeral,
       });
     }
   }
 
-  setListening (text: string) {
+  setListening(text: string) {
     return this.user?.setPresence({
       activities: [
         {

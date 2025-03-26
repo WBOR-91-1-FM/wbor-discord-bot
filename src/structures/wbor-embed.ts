@@ -1,5 +1,5 @@
-import { EMBED_COLOR, LOGO_URL, STATION_NAME } from "../constants.ts";
-import { EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from 'discord.js';
+import { EMBED_COLOR, LOGO_URL, STATION_NAME } from '../constants';
 
 export default class WBOREmbed extends EmbedBuilder {
   constructor() {

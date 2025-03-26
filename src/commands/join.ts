@@ -1,12 +1,12 @@
-import { getVoiceConnection } from "@discordjs/voice";
-import * as radio from "../utils/radio";
-import type {CommandInfo} from "../structures/commands/command";
-import { Context } from "../structures/commands/context";
-import { GuildMember } from "discord.js";
+import { getVoiceConnection } from '@discordjs/voice';
+import { GuildMember } from 'discord.js';
+import * as radio from '../utils/radio';
+import type { CommandInfo } from '../structures/commands/command';
+import type Context from '../structures/commands/context';
 
 export const info: CommandInfo = {
-  name: "join",
-  description: "Joins the voice channel you are in and starts the radio.",
+  name: 'join',
+  description: 'Joins the voice channel you are in and starts the radio.',
   noDM: true,
 };
 
@@ -14,7 +14,7 @@ export default async (ctx: Context): Promise<void> => {
   const member = ctx.message.member as GuildMember;
   if (!member?.voice?.channel) {
     await ctx.message.reply(
-      "🤔 Sorry, you need to be in a voice channel to use this command.",
+      '🤔 Sorry, you need to be in a voice channel to use this command.',
     );
     return;
   }
@@ -35,6 +35,6 @@ export default async (ctx: Context): Promise<void> => {
   );
 
   await ctx.message.reply(
-    `📻 You\'ll now be listening to **${ctx.client.currentSong.title}** on <#${member.voice.channel.id}>.`,
+    `📻 You'll now be listening to **${ctx.client.currentSong.title}** on <#${member.voice.channel.id}>.`,
   );
 };

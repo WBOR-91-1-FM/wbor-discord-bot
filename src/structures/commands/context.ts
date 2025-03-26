@@ -2,7 +2,8 @@
  * Defines the class instance that is given to every command execution, the Context.
  * It contains the message, the author, the channel, the guild, and the client.
  * We store the message and the client and use getters for the rest.
- * We also use define the answer method, which is basically message.reply without mentioning the author.
+ * We also use define the answer method, which is basically message.reply without
+ * mentioning the author.
  */
 import {
   CommandInteraction,
@@ -13,13 +14,14 @@ import {
   MessagePayload,
   User,
   type VoiceBasedChannel,
-} from "discord.js";
-import { WBORClient } from "../../client";
-import { GuildEntity } from "../../database/entities/guilds";
-import { UserEntity } from "../../database/entities/users";
+} from 'discord.js';
+import type { WBORClient } from '../../client';
+import type { GuildEntity } from '../../database/entities/guilds';
+import type { UserEntity } from '../../database/entities/users';
 
-export class Context {
+export default class Context {
   guildEntity: GuildEntity | null;
+
   userEntity: UserEntity;
 
   constructor(
