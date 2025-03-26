@@ -1,6 +1,6 @@
 import { getVoiceConnection } from "@discordjs/voice";
 import * as radio from "../utils/radio";
-import { CommandInfo } from "../structures/commands/command";
+import type {CommandInfo} from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
 import { GuildMember } from "discord.js";
 

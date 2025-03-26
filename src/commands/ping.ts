@@ -1,5 +1,5 @@
 import { WBOR_API_URL } from "../constants";
-import { CommandInfo } from "../structures/commands/command";
+import type {CommandInfo} from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
 
 export const info: CommandInfo = {
@@ -10,7 +10,7 @@ export const info: CommandInfo = {
 export default async (ctx: Context): Promise<void> => {
   try {
     const response = await fetch(WBOR_API_URL.replace("station/2", "status"));
-    const data = await response.json();
+    const data = await response.json() as { online: boolean };
 
     const text = data?.online
       ? "✅ WBOR is on air at <https://wbor.org>"

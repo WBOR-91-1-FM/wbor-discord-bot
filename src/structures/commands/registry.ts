@@ -5,7 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { SlashCommandBuilder, REST, Routes, Client } from "discord.js";
-import { ImportedCommand } from "./command";
+import type {ImportedCommand} from "./command";
 
 export class CommandRegistry {
   public commands: ImportedCommand[];

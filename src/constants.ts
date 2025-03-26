@@ -1,4 +1,4 @@
-import { ColorResolvable } from "discord.js";
+import type {ColorResolvable} from "discord.js";
 
 export const WBOR_API_URL =
   process.env.AZURACAST_API_URL || "https://azura.wbor.org/api/station/2";

@@ -8,15 +8,11 @@ import {
   CommandInteraction,
   Guild,
   GuildMember,
-  Interaction,
-  InteractionReplyOptions,
+  type InteractionReplyOptions,
   InteractionResponse,
-  Message,
   MessagePayload,
-  MessageReplyOptions,
-  TextChannel,
   User,
-  VoiceBasedChannel,
+  type VoiceBasedChannel,
 } from "discord.js";
 import { WBORClient } from "../../client";
 import { GuildEntity } from "../../database/entities/guilds";
@@ -29,7 +25,7 @@ export class Context {
   constructor(
     public message: CommandInteraction,
     public client: WBORClient,
-    { guildEntity, userEntity },
+    { guildEntity, userEntity }: { guildEntity: GuildEntity | null; userEntity: UserEntity },
   ) {
     this.message = message;
     this.client = client;

@@ -9,7 +9,7 @@ import {
   UPCOMING_SHOWS_TABLE_SELECTOR,
 } from "./selectors";
 import * as cheerio from "cheerio";
-import { SpinitronShow, SpinitronUpcomingShow } from "./types";
+import type {SpinitronShow, SpinitronUpcomingShow} from "./types";
 
 export const getPage = () => fetch(SPINITRON_URL!).then((a) => a.text());
 

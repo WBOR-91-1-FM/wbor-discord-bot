@@ -1,6 +1,6 @@
 import { getVoiceConnection } from "@discordjs/voice";
 import { GuildMember, PermissionFlagsBits, TextChannel } from "discord.js";
-import { CommandInfo } from "../structures/commands/command";
+import type {CommandInfo} from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
 
 export const info: CommandInfo = {

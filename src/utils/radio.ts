@@ -8,14 +8,12 @@ import {
   getVoiceConnection,
   AudioPlayerStatus,
   entersState,
-  AudioResource,
-  AudioPlayer,
-  VoiceConnection,
+  AudioResource
 } from "@discordjs/voice";
-import { spawn, ChildProcessWithoutNullStreams } from "child_process";
-import { Client, VoiceBasedChannel, Guild } from "discord.js";
+import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
+import { Client, type VoiceBasedChannel, Guild } from "discord.js";
 import { WBORClient } from "../client";
-import { Song } from "./wbor";
+import type {Song} from "./wbor";
 
 // Track connected channels
 export const connectedChannels = new Set<string>();
@@ -122,12 +120,8 @@ export async function playRadio(channel: VoiceBasedChannel): Promise<void> {
   player.on(AudioPlayerStatus.Idle, async () => {
     console.log("Player went idle, restarting stream...");
 
+    await destroyStream()
     let newResource = createFFmpegStream(url);
-    if (newResource.ended || !newResource.readable) {
-      // recreate the resource
-      await destroyStream();
-      newResource = createFFmpegStream(url);
-    }
 
     try {
       await entersState(connection, VoiceConnectionStatus.Ready, 5000);
@@ -163,9 +157,9 @@ export async function fetchStreamURL(): Promise<string> {
   if (streamURL) return streamURL;
 
   const response = await fetch(process.env.AZURACAST_API_URL as string);
-  const data = await response.json();
+  const data = await response.json() as { mounts: { url: string }[] };
 
-  streamURL = data.mounts[0].url;
+  streamURL = data.mounts[0]!.url;
   console.log(`Using stream URL: ${streamURL}`);
   return streamURL!;
 }

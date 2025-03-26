@@ -1,5 +1,5 @@
 import WBOREmbed from "../structures/wbor-embed";
-import { CommandInfo } from "../structures/commands/command";
+import type {CommandInfo} from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
 import { isShowFunctionalityAvailable } from "../constants";
 

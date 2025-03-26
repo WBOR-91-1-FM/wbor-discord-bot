@@ -1,6 +1,6 @@
 import WBOREmbed from "../structures/wbor-embed";
 import { commandRegistry } from "../structures/commands/registry";
-import { CommandInfo } from "../structures/commands/command";
+import type {CommandInfo} from "../structures/commands/command";
 import { Context } from "../structures/commands/context";
 import { STATION_CALL_SIGN } from "../constants";
 
