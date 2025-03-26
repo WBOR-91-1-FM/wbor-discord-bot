@@ -2,8 +2,7 @@ import {
   ActivityType,
   Client,
   GatewayIntentBits,
-  Guild,
-  Interaction,
+  type Interaction,
   MessageFlags,
 } from "discord.js";
 import { StateHandler } from "./structures/state-handler";
@@ -15,7 +14,7 @@ import {
   updateAllChannelStatuses,
   updateChannelStatus,
 } from "./utils/radio";
-import { NowPlayingData } from "./utils/wbor";
+import type {NowPlayingData} from "./utils/wbor";
 import {
   getAllExistingVoiceChannels,
   getOrCreateGuild,
@@ -47,19 +46,28 @@ export class WBORClient extends Client {
     this.on("interactionCreate", (interaction) =>
       this.onInteractionCreate(interaction),
     );
+  }
 
+  get songPresenceText() {
+    // remove [], () and anything in between on the title
+    const title = this.currentSong.title.replace(/\[.*?]|\(.*?\)/g, "").trim();
+    if (!this.currentShow.isAutomationBear) {
+      return `${this.currentSong.artist} - ${title}, on ${this.currentShow.title} with ${this.currentShow.host} 📻`;
+    }
+    return `${this.currentSong.artist} - ${this.currentSong.title} 🎶`;
+  }
+
+  updatePresence() {
+    this.setListening(this.songPresenceText);
+  }
+
+  setUpPresenceUpdates() {
     this.stateHandler.on("trackChange", async (np: NowPlayingData) => {
-      this.user?.setPresence({
-        activities: [
-          {
-            name: `${np.now_playing.song.artist} - ${np.now_playing.song.title}`,
-            type: ActivityType.Listening,
-          },
-        ],
-      });
-
+      this.updatePresence();
       await updateAllChannelStatuses(this, np.now_playing.song);
     });
+
+    this.stateHandler.on("showChange", () => this.updatePresence())
   }
 
   async joinChannels() {
@@ -83,6 +91,9 @@ export class WBORClient extends Client {
   async onReady() {
     console.log(`Connected to Discord. Waiting until connected to AzuraCast`);
     await this.stateHandler.waitForTrack();
+    await this.stateHandler.waitForShow();
+    this.updatePresence();
+    this.setUpPresenceUpdates();
 
     // should we update the commands globally?
     if (process.env.DISCORD_UPDATE_COMMANDS === "true") {
@@ -129,7 +140,7 @@ export class WBORClient extends Client {
 
     const ctx = new Context(interaction, this, {
       guildEntity: guildData ? new GuildEntity(guildData) : null,
-      userEntity: new UserEntity(userData),
+      userEntity: new UserEntity(userData!),
     });
 
     if (!commandRegistry.shouldRunCommand(command, ctx))
@@ -140,12 +151,23 @@ export class WBORClient extends Client {
 
     try {
       await command.default(ctx);
-    } catch (error) {
+    } catch (error: any) {
       logError(new Date(), error);
       interaction.reply({
         content: "☹️ Sorry, an error occurred while executing this command.",
         flags: MessageFlags.Ephemeral,
       });
     }
+  }
+
+  setListening (text: string) {
+    return this.user?.setPresence({
+      activities: [
+        {
+          name: text,
+          type: ActivityType.Listening,
+        },
+      ],
+    });
   }
 }

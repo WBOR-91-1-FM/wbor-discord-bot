@@ -3,8 +3,8 @@
  */
 
 import { EventEmitter } from "events";
-import { NowPlayingData } from "../utils/wbor";
-import { SpinitronShow } from "../spinitron/types";
+import type {NowPlayingData} from "../utils/wbor";
+import type {SpinitronShow} from "../spinitron/types";
 import { EventSource } from "eventsource";
 import {
   isShowFunctionalityAvailable,
@@ -43,6 +43,16 @@ export class StateHandler extends EventEmitter {
     });
   }
 
+  waitForShow() {
+    if (this.currentShow?.title) {
+      return Promise.resolve(this.currentShow);
+    }
+
+    return new Promise<SpinitronShow>((resolve) => {
+      this.once("showChange", resolve);
+    })
+  }
+
   async #setUpShowTrack() {
     const show = await getCurrentShow();
 
@@ -66,7 +76,7 @@ export class StateHandler extends EventEmitter {
   #connectToTrackSSE() {
     const url = SSE_TRACK_FEED;
 
-    let subs = {};
+    let subs: Record<string, any> = {};
     subs[STATION_ID] = { recover: true };
 
     const data = new URLSearchParams({
