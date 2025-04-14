@@ -7,7 +7,8 @@
   "scripts": {
     "start": "bun run index.ts",
     "dev": "bun run --watch index.ts",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "eslint": "eslint ."
   },
   "repository": {
     "type": "git",

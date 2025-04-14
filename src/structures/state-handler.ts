@@ -47,6 +47,8 @@ export default class StateHandler extends EventEmitter {
   }
 
   waitForShow() {
+    if (!isShowFunctionalityAvailable) return Promise.resolve(null);
+
     if (this.currentShow?.title) {
       return Promise.resolve(this.currentShow);
     }

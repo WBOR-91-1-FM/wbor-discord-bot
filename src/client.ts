@@ -3,7 +3,8 @@ import {
   Client,
   GatewayIntentBits,
   type Interaction,
-  MessageFlags, type VoiceBasedChannel,
+  MessageFlags,
+  type VoiceBasedChannel,
 } from 'discord.js';
 import StateHandler from './structures/state-handler';
 import { commandRegistry } from './structures/commands/registry';
@@ -47,15 +48,19 @@ export default class WBORClient extends Client {
   }
 
   get songPresenceText() {
+    const currentShow = this.currentShow ?? {
+      isAutomationBear: true,
+      title: '',
+    };
     // remove metadata stuff from the track title
     const title = cleanTrackTitle(this.currentSong.title);
     // add " to the shot name if not present
-    const quotedShowName = this.currentShow.title.startsWith('"')
-      ? this.currentShow.title
-      : `"${this.currentShow.title}"`;
+    const quotedShowName = currentShow.title.startsWith?.('"')
+      ? currentShow.title
+      : `"${currentShow.title}"`;
 
-    if (!this.currentShow.isAutomationBear) {
-      return `${this.currentSong.artist} - ${title} • ${quotedShowName}, with ${this.currentShow.host} 📻`;
+    if (!currentShow.isAutomationBear) {
+      return `${this.currentSong.artist} - ${title} • ${quotedShowName}, with ${currentShow.host} 📻`;
     }
     return `${this.currentSong.artist} - ${this.currentSong.title} 🎶`;
   }
@@ -77,7 +82,7 @@ export default class WBORClient extends Client {
     const voiceChannels = await getAllExistingVoiceChannels();
 
     voiceChannels.map(async (vc) => {
-      const channel = await this.channels.fetch(vc!) as VoiceBasedChannel;
+      const channel = (await this.channels.fetch(vc!)) as VoiceBasedChannel;
       if (!channel || !channel?.isVoiceBased()) return;
 
       await playRadio(channel)
