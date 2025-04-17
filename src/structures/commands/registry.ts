@@ -8,6 +8,9 @@ import {
   SlashCommandBuilder, REST, Routes,
 } from 'discord.js';
 import type { ImportedCommand } from './command';
+import { logger } from '../../utils/log.ts';
+
+const log = logger.on('registry');
 
 export class CommandRegistry {
   public commands: ImportedCommand[];
@@ -35,7 +38,7 @@ export class CommandRegistry {
       this.registerCommand(command);
     });
 
-    console.log('Loaded', commandFiles.length, 'commands');
+    log.debug(`Loaded ${commandFiles.length} commands`);
   }
 
   async registerApplicationCommands(
@@ -44,7 +47,7 @@ export class CommandRegistry {
     guildId?: string,
   ): Promise<void> {
     if (!applicationId || !token) {
-      console.error(
+      log.error(
         'Application ID and token are required to register slash commands',
       );
       return;
@@ -65,10 +68,10 @@ export class CommandRegistry {
           ? command.info.slashOptions(slashCommand)
           : slashCommand;
         slashCommands.push(cmd.toJSON());
-      } catch (error) {
-        console.error(
-          `Failed to convert command ${command.info.name} to slash command:`,
+      } catch (error: any) {
+        log.err(
           error,
+          `Failed to convert command ${command.info.name} to slash command:`,
         );
       }
     });
@@ -89,14 +92,14 @@ export class CommandRegistry {
             body: slashCommands,
           });
 
-        console.log(
+        log.debug(
           `Successfully registered ${(data as any[]).length} application commands.`,
         );
-      } catch (error) {
-        console.error('Error registering slash commands:', error);
+      } catch (error: any) {
+        log.err(error, 'Error registering slash commands');
       }
     } else {
-      console.log('No commands were converted to slash commands.');
+      log.warn('No commands were converted to slash commands.');
     }
   }
 

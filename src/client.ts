@@ -22,6 +22,9 @@ import {
   GuildEntity,
 } from './database/entities/guilds';
 import { getOrCreateUser, UserEntity } from './database/entities/users';
+import { logger } from './utils/log.ts';
+
+const log = logger.on('client');
 
 export default class WBORClient extends Client {
   stateHandler = new StateHandler();
@@ -87,15 +90,15 @@ export default class WBORClient extends Client {
 
       await playRadio(channel)
         .then(() => updateChannelStatus(this, channel.id, this.currentSong))
-        .catch((err) => console.error(
-          `failed to play radio in ${channel.name} (${channel.id})`,
+        .catch((err) => log.err(
           err,
+          `failed to play radio in ${channel.name} (${channel.id})`,
         ));
     });
   }
 
   async onReady() {
-    console.log('Connected to Discord. Waiting until connected to AzuraCast');
+    log.info('Connected to Discord. Waiting until connected to AzuraCast');
     await this.stateHandler.waitForTrack();
     await this.stateHandler.waitForShow();
     this.updatePresence();

@@ -14,6 +14,9 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import { Client, type VoiceBasedChannel } from 'discord.js';
 import type WBORClient from '../client';
 import type { Song } from './wbor';
+import { logger } from './log.ts';
+
+const log = logger.on('radio');
 
 // Track connected channels
 export const connectedChannels = new Set<string>();
@@ -40,29 +43,28 @@ function createFFmpegStream(url: string): AudioResource {
     });
   }
 
-  const ffmpeg = stream
-    || spawn('ffmpeg', [
-      '-reconnect', '1',
-      '-reconnect_streamed', '1',
-      '-reconnect_delay_max', '5',
-      '-i', url,
-      '-f', 'mp3',
-      '-ar', '48000', // discord expects either 41kHz or 48kHz
-      '-ac', '2',
-      '-bufsize', process.env.FFMPEG_BUFFER_SIZE || '1024k',
-      '-loglevel', 'error',
-      'pipe:1',
-    ]);
+  const ffmpeg = spawn('ffmpeg', [
+    '-reconnect', '1',
+    '-reconnect_streamed', '1',
+    '-reconnect_delay_max', '5',
+    '-i', url,
+    '-f', 'mp3',
+    '-ar', '48000', // discord expects either 41kHz or 48kHz
+    '-ac', '2',
+    '-bufsize', process.env.FFMPEG_BUFFER_SIZE || '1024k',
+    '-loglevel', 'error',
+    'pipe:1',
+  ]);
 
   stream = ffmpeg;
 
   ffmpeg.on('error', (error) => {
-    console.error('FFMPEG error:', error);
+    log.err(error);
     destroyStream();
   });
 
   ffmpeg.on('close', (code) => {
-    console.log(`FFMPEG process exited with code ${code}`);
+    log.warn(`FFMPEG process exited with code ${code}`);
     destroyStream();
   });
 
@@ -98,8 +100,7 @@ export async function fetchStreamURL(): Promise<string> {
   const response = await fetch(process.env.AZURACAST_API_URL as string);
   const data = (await response.json()) as { mounts: { url: string }[] };
 
-  console.log(`${data.mounts.length} mounts found`);
-  console.log(`  -> ${data.mounts.map((mount: any) => `[${mount.id}] ${mount.name} (${mount.url})`).join('\n  -> ')}`);
+  log.debug(`${data.mounts.length} mounts found:\n  -> ${data.mounts.map((mount: any) => `(${mount.id}) ${mount.name} (${mount.url})`).join('\n  -> ')}`);
 
   let mount: any = data.mounts.find((m: any) => m.is_default) || data.mounts[0];
   if (process.env.AZURACAST_MOUNT_ID) {
@@ -111,7 +112,7 @@ export async function fetchStreamURL(): Promise<string> {
   }
   if (!mount) throw new Error('No mounts were found.');
 
-  console.log(`Using ID ${mount.id} (${mount.url})`);
+  log.info(`Using mount ID ${mount.id} (${mount.name}; ${mount.url})`);
   streamURL = mount.url;
   return streamURL!;
 }
@@ -155,9 +156,7 @@ export async function playRadio(channel: VoiceBasedChannel): Promise<void> {
   const url = await fetchStreamURL();
   const resource = createFFmpegStream(url);
 
-  // Add error handling for the player
   player.on('error', (error) => {
-    console.error('Player error:', error);
     // We emit an idle event so the player can restart the resource and its stream if needed.
     player.emit(AudioPlayerStatus.Idle);
   });
@@ -170,8 +169,8 @@ export async function playRadio(channel: VoiceBasedChannel): Promise<void> {
     try {
       await entersState(connection, VoiceConnectionStatus.Ready, 5000);
       player.play(newResource);
-    } catch (error) {
-      console.error('Failed to play new resource:', error);
+    } catch (error: any) {
+      log.err(error, 'Failed to play new resource');
     }
   });
 
@@ -207,8 +206,9 @@ export async function updateChannelStatus(
       body: JSON.stringify({ status }),
       method: 'PUT',
     });
-  } catch (error) {
-    console.error('Error updating channel status:', error);
+  } catch (error: any) {
+    log.err(error, `Failed to update channel status for ${id}`);
+    connectedChannels.delete(id);
   }
 }
 
@@ -220,9 +220,6 @@ export async function updateAllChannelStatuses(
   song: Song,
 ): Promise<void> {
   await Promise.allSettled(
-    Array.from(connectedChannels).map((id) => updateChannelStatus(client, id, song).catch((err) => {
-      console.error(`Error updating channel status for ${id}:`, err);
-      connectedChannels.delete(id);
-    })),
+    Array.from(connectedChannels).map((id) => updateChannelStatus(client, id, song)),
   );
 }

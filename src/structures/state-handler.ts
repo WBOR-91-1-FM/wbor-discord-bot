@@ -13,6 +13,9 @@ import {
   STATION_ID,
 } from '../constants';
 import { getCurrentShow } from '../spinitron';
+import { logger } from '../utils/log.ts';
+
+const log = logger.on('states');
 
 const UPDATE_SHOW_INTERVAL = 1 * 60 * 1000;
 
@@ -30,7 +33,7 @@ export default class StateHandler extends EventEmitter {
 
     if (isShowFunctionalityAvailable) this.#setUpShowTrack();
     else {
-      console.error(
+      log.error(
         'SPINITRON_URL not set, show functionality will be unavailable.',
       );
     }
@@ -62,7 +65,7 @@ export default class StateHandler extends EventEmitter {
     const show = await getCurrentShow();
 
     if (!this.#areShowsTheSame(show)) {
-      console.log(`WBOR is now airing ${show.title}, by ${show.host}`);
+      log.on('spinitron').info(`WBOR is now airing ${show.title}, by ${show.host}`);
       this.currentShow = show;
       this.emit('showChange', show);
     }
@@ -103,13 +106,13 @@ export default class StateHandler extends EventEmitter {
       else if (parsedData.pub?.data?.np) this.#onSSENewTrack(parsedData.pub.data);
     });
 
-    es.addEventListener('error', (error) => {
-      console.error('EventSource error:', error);
+    es.addEventListener('error', (error: any) => {
+      log.on('azuracast').err(error, 'Error in SSE connection');
     });
   }
 
   #onSSEReady(payload: Record<string, any>) {
-    console.log(
+    log.on('azuracast').debug(
       `Successfully connected using SSE. AzuraCast ${payload.connect.version}. ${payload.connect.ping}ms.`,
     );
 
@@ -122,7 +125,7 @@ export default class StateHandler extends EventEmitter {
     const npPayload = payload.np as NowPlayingData;
 
     if (!this.#areTracksTheSame(npPayload)) {
-      console.log(
+      log.on('azuracast').info(
         `WBOR is now playing ${npPayload.now_playing.song.title}, by ${npPayload.now_playing.song.artist}`,
       );
 
