@@ -12,7 +12,7 @@ import {
 } from '@discordjs/voice';
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import { Client, type VoiceBasedChannel } from 'discord.js';
-import type { WBORClient } from '../client';
+import type WBORClient from '../client';
 import type { Song } from './wbor';
 
 // Track connected channels
@@ -21,49 +21,52 @@ export const connectedChannels = new Set<string>();
 // Stream object for reuse
 let stream: ChildProcessWithoutNullStreams | null = null;
 
+export function destroyStream() {
+  if (stream) {
+    stream.kill();
+    stream = null;
+  }
+}
+
 /**
  * Creates an FFmpeg stream for audio playback
  * @param url The URL of the audio stream
  * @returns Audio resource for playback
  */
 function createFFmpegStream(url: string): AudioResource {
+  if (stream) {
+    return createAudioResource(stream.stdout, {
+      inputType: StreamType.Arbitrary,
+    });
+  }
+
   const ffmpeg = stream
     || spawn('ffmpeg', [
-      '-reconnect',
-      '1',
-      '-reconnect_streamed',
-      '1',
-      '-reconnect_delay_max',
-      '5',
-      '-i',
-      url,
-      '-f',
-      'mp3',
-      '-ar',
-      '48000',
-      '-ac',
-      '2',
-      '-bufsize',
-      '1024k',
-      '-loglevel',
-      'error',
+      '-reconnect', '1',
+      '-reconnect_streamed', '1',
+      '-reconnect_delay_max', '5',
+      '-i', url,
+      '-f', 'mp3',
+      '-ar', '48000', // discord expects either 41kHz or 48kHz
+      '-ac', '2',
+      '-bufsize', process.env.FFMPEG_BUFFER_SIZE || '1024k',
+      '-loglevel', 'error',
       'pipe:1',
     ]);
 
-  if (!stream) {
-    stream = ffmpeg;
-  }
+  stream = ffmpeg;
 
-  return createAudioResource(ffmpeg.stdout, {
-    inputType: StreamType.Arbitrary,
+  ffmpeg.on('error', (error) => {
+    console.error('FFMPEG error:', error);
+    destroyStream();
   });
-}
 
-export async function destroyStream() {
-  if (stream) {
-    stream.kill();
-    stream = null;
-  }
+  ffmpeg.on('close', (code) => {
+    console.log(`FFMPEG process exited with code ${code}`);
+    destroyStream();
+  });
+
+  return createFFmpegStream(url);
 }
 
 // clean up the stream or else it takes ages to exit
@@ -77,6 +80,7 @@ function stopPlaying(guildId: string): void {
   const connection = getVoiceConnection(guildId);
   if (connection) {
     connection.destroy();
+    connectedChannels.delete(connection.joinConfig.channelId!);
   }
 }
 
@@ -92,10 +96,23 @@ export async function fetchStreamURL(): Promise<string> {
   if (streamURL) return streamURL;
 
   const response = await fetch(process.env.AZURACAST_API_URL as string);
-  const data = await response.json() as { mounts: { url: string }[] };
+  const data = (await response.json()) as { mounts: { url: string }[] };
 
-  streamURL = data.mounts[0]!.url;
-  console.log(`Using stream URL: ${streamURL}`);
+  console.log(`${data.mounts.length} mounts found`);
+  console.log(`  -> ${data.mounts.map((mount: any) => `[${mount.id}] ${mount.name} (${mount.url})`).join('\n  -> ')}`);
+
+  let mount: any = data.mounts.find((m: any) => m.is_default) || data.mounts[0];
+  if (process.env.AZURACAST_MOUNT_ID) {
+    const pickedMount = data.mounts.find((m: any) => m.id === process.env.AZURACAST_MOUNT_ID);
+    if (!pickedMount) {
+      throw new Error(`Mount ID ${process.env.AZURACAST_MOUNT_ID} not found.`);
+    }
+    mount = pickedMount;
+  }
+  if (!mount) throw new Error('No mounts were found.');
+
+  console.log(`Using ID ${mount.id} (${mount.url})`);
+  streamURL = mount.url;
   return streamURL!;
 }
 
@@ -141,19 +158,21 @@ export async function playRadio(channel: VoiceBasedChannel): Promise<void> {
   // Add error handling for the player
   player.on('error', (error) => {
     console.error('Player error:', error);
+    // We emit an idle event so the player can restart the resource and its stream if needed.
+    player.emit(AudioPlayerStatus.Idle);
   });
 
   // Handle player idling (stream ends)
   player.on(AudioPlayerStatus.Idle, async () => {
-    console.log('Player went idle, restarting stream...');
-
-    await destroyStream();
+    destroyStream();
     const newResource = createFFmpegStream(url);
 
     try {
       await entersState(connection, VoiceConnectionStatus.Ready, 5000);
       player.play(newResource);
-    } catch (error) { /* empty */ }
+    } catch (error) {
+      console.error('Failed to play new resource:', error);
+    }
   });
 
   // Start playing
