@@ -6,8 +6,14 @@ export enum LogLevel {
   INFO = 'INFO',
   WARN = 'WARN',
   ERROR = 'ERROR',
-  FATAL = 'FATAL',
 }
+
+const lvls = {
+  [LogLevel.DEBUG]: 1,
+  [LogLevel.INFO]: 2,
+  [LogLevel.WARN]: 3,
+  [LogLevel.ERROR]: 4,
+};
 
 export interface LoggerOptions {
   level?: LogLevel;
@@ -24,8 +30,6 @@ function levelToASCII(level: LogLevel): string {
       return '\x1b[33m'; // yellow
     case LogLevel.ERROR:
       return '\x1b[31m'; // red
-    case LogLevel.FATAL:
-      return '\x1b[35m'; // magenta
     default:
       return '\x1b[0m'; // reset
   }
@@ -46,6 +50,8 @@ export class Logger {
   }
 
   log(level: LogLevel, message: string): void {
+    if (!this.#shouldPrint(level)) return;
+
     // date format is yyyy-mm-dd hh:mm:ssZ
     const timestamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
     const date = timestamp.split(' ')[0]!.split('-').join('/');
@@ -57,6 +63,16 @@ export class Logger {
     console.log(
       `${formattedDate} ${BOLD}${levelToASCII(level)}[${level}]${RESET} ${scope} ${message}`,
     );
+  }
+
+  #shouldPrint(level: LogLevel): boolean {
+    const currentLevel = this.opts.level as LogLevel;
+    if (!lvls[currentLevel]) {
+      throw new Error(`Invalid log level: ${currentLevel}`);
+    }
+
+    const [currentLevelValue, levelValue] = [lvls[currentLevel], lvls[level]];
+    return currentLevelValue <= levelValue;
   }
 
   debug(message: string) { this.log(LogLevel.DEBUG, message); }
@@ -79,6 +95,6 @@ export class Logger {
 }
 
 export const logger = new Logger({
-  level: LogLevel.DEBUG,
+  level: process.env.LOG_LEVEL as LogLevel || LogLevel.INFO,
   scope: 'org.wbor.discord',
 });
