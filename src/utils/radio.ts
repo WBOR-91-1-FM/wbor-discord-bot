@@ -14,7 +14,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import { Client, type VoiceBasedChannel } from 'discord.js';
 import type WBORClient from '../client';
 import type { Song } from './wbor';
-import { logger } from './log.ts';
+import { logger } from './log';
 
 const log = logger.on('radio');
 
@@ -156,7 +156,7 @@ export async function playRadio(channel: VoiceBasedChannel): Promise<void> {
   const url = await fetchStreamURL();
   const resource = createFFmpegStream(url);
 
-  player.on('error', (error) => {
+  player.on('error', () => {
     // We emit an idle event so the player can restart the resource and its stream if needed.
     player.emit(AudioPlayerStatus.Idle);
   });

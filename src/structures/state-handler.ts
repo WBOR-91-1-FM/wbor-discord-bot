@@ -13,7 +13,7 @@ import {
   STATION_ID,
 } from '../constants';
 import { getCurrentShow } from '../spinitron';
-import { logger } from '../utils/log.ts';
+import { logger } from '../utils/log';
 
 const log = logger.on('states');
 
@@ -138,7 +138,7 @@ export default class StateHandler extends EventEmitter {
     if (!this.currentTrack) return false;
     return (
       this.currentTrack.now_playing.song.title
-        === song.now_playing.song.title
+      === song.now_playing.song.title
       && this.currentTrack.now_playing.song.art === song.now_playing.song.art
     );
   }

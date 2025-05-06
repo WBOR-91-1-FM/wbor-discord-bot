@@ -34,7 +34,7 @@ export const parsePage = (html: string): SpinitronShow => {
     const showName = $row.find('strong a').text().trim();
     const djNames: string[] = [];
     // Get all links that appear after the strong tag (show title)
-    $row.find('td:nth-child(2) a').each(function () {
+    $row.find('td:nth-child(2) a').each(() => {
       // Skip show links (which are inside a strong tag)
       if (!$(this).closest('strong').length) {
         djNames.push($(this).text().trim());

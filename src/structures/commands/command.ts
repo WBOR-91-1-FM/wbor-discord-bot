@@ -2,7 +2,7 @@
  * What's expected from the command files that we load.
  */
 import { SlashCommandBuilder } from 'discord.js';
-import { Context } from './context';
+import Context from './context';
 
 export interface CommandInfo {
   name: string;

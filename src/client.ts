@@ -22,7 +22,7 @@ import {
   GuildEntity,
 } from './database/entities/guilds';
 import { getOrCreateUser, UserEntity } from './database/entities/users';
-import { logger } from './utils/log.ts';
+import { logger } from './utils/log';
 
 const log = logger.on('client');
 

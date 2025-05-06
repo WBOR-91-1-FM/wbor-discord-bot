@@ -8,7 +8,7 @@ import {
   SlashCommandBuilder, REST, Routes,
 } from 'discord.js';
 import type { ImportedCommand } from './command';
-import { logger } from '../../utils/log.ts';
+import { logger } from '../../utils/log.js';
 
 const log = logger.on('registry');
 
