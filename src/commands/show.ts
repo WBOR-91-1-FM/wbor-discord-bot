@@ -3,7 +3,7 @@ import type { CommandInfo } from '../structures/commands/command';
 import type Context from '../structures/commands/context';
 import { isShowFunctionalityAvailable, STATION_NAME } from '../constants';
 import type { SpinitronPlaylist } from '../spinitron/types/playlist';
-import { makeSpinitronDJNames } from '../spinitron/utils.ts';
+import { makeSpinitronDJNames } from '../spinitron/utils';
 
 export const info: CommandInfo = {
   name: 'show',
