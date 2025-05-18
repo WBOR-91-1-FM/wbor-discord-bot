@@ -10,6 +10,11 @@ services:
       - TZ
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "30m"
+        max-file: "30"
     restart: unless-stopped
 
   postgres:
@@ -21,6 +26,11 @@ services:
     volumes:
       - wbor-discord-pg:/var/lib/postgresql/data
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "30m"
+        max-file: "30"
 
 volumes:
   wbor-discord-pg:
