@@ -1,79 +1,136 @@
-import * as cheerio from 'cheerio';
-import { SPINITRON_URL, STATION_NAME } from '../constants';
-import {
-  CURRENT_SHOW_DATE_SELECTOR,
-  CURRENT_SHOW_HOST_SELECTOR,
-  CURRENT_SHOW_GENRE_SELECTOR,
-  CURRENT_SHOW_IMAGE_SELECTOR,
-  CURRENT_SHOW_TITLE_SELECTOR,
-  CURRENT_SHOW_DESCRIPTION_SELECTOR,
-  UPCOMING_SHOWS_TABLE_SELECTOR,
-} from './selectors';
-import type { SpinitronShow, SpinitronUpcomingShow } from './types';
+import { fetchWithRetries } from 'fetch-with-retries';
+import { makeSpinitronPlaylist, type SpinitronPlaylist } from './types/playlist';
+import { makeSpinitronShow, type SpinitronShow } from './types/show';
+import { getItemOrArray } from './utils';
+import type { SpinitronItem } from './types/common';
+import { PERSONA_TTL, SHOW_TTL } from './cache';
+import { sleepRandom } from '../utils/misc';
+import { makeSpinitronSpins, type SpinitronSpin } from './types/spin';
 
-export const cleanSpinitronHost = () => new URL(SPINITRON_URL!).hostname;
+export default class SpinitronClient {
+  rootURL = process.env.SPINITRON_PROXY_URL;
 
-export const getPage = () => fetch(SPINITRON_URL!).then((a) => a.text());
+  cacheMap = new Map<string, { created: number, val: any }>();
 
-export const parsePage = (html: string): SpinitronShow => {
-  const $ = cheerio.load(html);
-  const currentShowDate = $(CURRENT_SHOW_DATE_SELECTOR).text().trim();
-  const currentShowHost = $(CURRENT_SHOW_HOST_SELECTOR).text().trim();
-  const currentShowGenre = $(CURRENT_SHOW_GENRE_SELECTOR).text().trim();
-  const currentShowImage = $(CURRENT_SHOW_IMAGE_SELECTOR).attr('src');
-  const currentShowTitle = $(CURRENT_SHOW_TITLE_SELECTOR).text().trim();
-  const currentShowDescription = $(CURRENT_SHOW_DESCRIPTION_SELECTOR)
-    .text()
-    .trim();
+  async getCurrentShow(): Promise<SpinitronPlaylist | undefined> {
+    const playlists = await this.getPlaylists();
+    return playlists[0];
+  }
 
-  const shows: SpinitronUpcomingShow[] = [];
-  $(UPCOMING_SHOWS_TABLE_SELECTOR).each((index, el) => {
-    const $row = $(el);
+  async getSpins(): Promise<SpinitronSpin[]> {
+    let spins = await this.cachedRequest('/spins', 30)
+      .then(makeSpinitronSpins);
 
-    const showTime = $row.find('.show-time').text().trim();
-    const showName = $row.find('strong a').text().trim();
-    const djNames: string[] = [];
-    // Get all links that appear after the strong tag (show title)
-    $row.find('td:nth-child(2) a').each(() => {
-      // Skip show links (which are inside a strong tag)
-      if (!$(this).closest('strong').length) {
-        djNames.push($(this).text().trim());
-      }
-    });
+    spins = await Promise.all(spins.map(async (spin) => this.fetchItemLinks(spin)));
 
-    // the genre might not be present, so we use a regex to see if it's there
-    let genre: string | null = null;
-    const secondTdText = $row.find('td:nth-child(2)').text();
-    const genreMatch = secondTdText.match(/\(([^)]+)\)/);
-    if (genreMatch && genreMatch[1]) {
-      genre = genreMatch[1].trim();
+    return spins;
+  }
+
+  /**
+   * Fetches shows from the Spinitron API. Useful for getting upcoming shows.
+   */
+  async getShows(): Promise<SpinitronShow[]> {
+    let shows = await this.cachedRequest('/shows', 30)
+      .then(makeSpinitronShow);
+
+    shows = await Promise.all(shows.map(async (show) => this.fetchItemLinks(show)));
+
+    return shows.map((show) => ({
+      ...show,
+    })).slice(0, 6);
+  }
+
+  /**
+   * Fetches the playlists from the Spinitron API.
+   */
+  async getPlaylists(): Promise<SpinitronPlaylist[]> {
+    let playlists = await this.cachedRequest('/playlists', 30)
+      .then(makeSpinitronPlaylist);
+
+    playlists = await Promise.all(playlists.map(async (pl) => this.fetchItemLinks(pl)));
+
+    return playlists;
+  }
+
+  async fetchItemLinks<T extends SpinitronItem>(item: T): Promise<T> {
+    const result = item as T;
+
+    const person = getItemOrArray(item._links.persona || item._links.personas || []);
+    if (person.length > 0) {
+      result.personas = await this.multipleCachedRequests(
+        person.map((p) => p.href),
+        PERSONA_TTL,
+        true,
+      );
     }
 
-    shows.push({
-      timeslot: showTime,
-      title: showName,
-      host: djNames.join(', '),
-      genre,
-      // when the automation playlist's on, the title will start with WBOR 91.1 FM.
-      isAutomationBear: showName.startsWith(STATION_NAME),
+    const { show, self } = item._links;
+    // @ts-expect-error
+    if (show?.href) {
+      result.show = await this.cachedRequest(
+        // @ts-expect-error
+        show.href.endsWith('view') ? self.href : show.href,
+        SHOW_TTL,
+        true,
+      );
+    }
+
+    return result;
+  }
+
+  async multipleCachedRequests(paths: string[], ttl: number = 60, full: boolean = false) {
+    return Promise.all(paths.map((pt) => this.cachedRequest(pt, ttl, full, true)));
+  }
+
+  /**
+   * A wrapper around the request method that caches the result for a given amount of seconds.
+   * @param path The path to the resource
+   * @param ttl The maximum age of the cache in secs. If a cached resource is older, it's refetched.
+   * @param isFullURL Whether the path is a full URL or not.
+   * @param jittered Whether to jitter the request. Won't be added if the resource is cached.
+   */
+  async cachedRequest(
+    path: string,
+    ttl: number = 60,
+    isFullURL: boolean = false,
+    jittered: boolean = false,
+  ) {
+    const key = isFullURL ? path : `${this.rootURL}${path}`;
+    const cachedValue = this.cacheMap.get(key);
+    if (cachedValue && Date.now() - cachedValue.created < ttl) {
+      return Promise.resolve(cachedValue.val);
+    }
+
+    if (jittered) await sleepRandom();
+    return this.request(path, isFullURL).then((value) => {
+      this.cacheMap.set(key, { val: value, created: Date.now() });
+      return value;
     });
-  });
+  }
 
-  return {
-    title: currentShowTitle,
-    description: currentShowDescription || 'No description available.',
-    timeslot: currentShowDate,
-    isAutomationBear: currentShowTitle.startsWith(STATION_NAME),
-    upcomingShows: shows,
-    host: currentShowHost || null,
-    genre: currentShowGenre || null,
-    image: currentShowImage?.startsWith('/')
-      ? `https://${cleanSpinitronHost()}${currentShowImage}`
-      : currentShowImage || null,
-  };
-};
-
-export const getCurrentShow = async () => {
-  const html = await getPage();
-  return parsePage(html);
-};
+  /**
+   * Makes a request to the Spinitron proxy. It's its own method so we can
+   * reuse our fetch-with-retries configuration.
+   * @param path The path to the resource
+   * @param isFullURL Whether the path is a full URL or not.
+   */
+  async request(path: string, isFullURL: boolean = true) {
+    return fetchWithRetries(isFullURL ? path : `${this.rootURL}${path}`, {
+      retryOptions: {
+        maxRetries: 3,
+        rateLimit: {
+          maxDelay: 2000,
+          maxRetries: 3,
+        },
+      },
+    })
+      .then(async (response) => {
+        if (!response.ok && response.status !== 404) {
+          const text = await response.text();
+          throw new Error(`HTTP error! Status: ${response.status}\n\nRequest: ${path}\nResponse: ${text}`);
+        }
+        return response.json().catch(() => null);
+      })
+      .catch((error) => console.error(error));
+  }
+}

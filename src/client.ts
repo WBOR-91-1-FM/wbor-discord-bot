@@ -7,6 +7,7 @@ import {
   type VoiceBasedChannel,
 } from 'discord.js';
 import StateHandler from './structures/state-handler';
+import SpinitronClient from './spinitron/index';
 import { commandRegistry } from './structures/commands/registry';
 import Context from './structures/commands/context';
 import { cleanTrackTitle, logError } from './utils/misc';
@@ -15,7 +16,7 @@ import {
   updateAllChannelStatuses,
   updateChannelStatus,
 } from './utils/radio';
-import type { NowPlayingData } from './utils/wbor';
+import type { NowPlayingData, Song } from './utils/wbor';
 import {
   getAllExistingVoiceChannels,
   getOrCreateGuild,
@@ -23,21 +24,28 @@ import {
 } from './database/entities/guilds';
 import { getOrCreateUser, UserEntity } from './database/entities/users';
 import { logger } from './utils/log';
+import type { SpinitronPlaylist } from './spinitron/types/playlist';
+import SpotifyClient from './structures/spotify-client';
+import { makeSpinitronDJNames } from './spinitron/utils';
 
 const log = logger.on('client');
 
 export default class WBORClient extends Client {
-  stateHandler = new StateHandler();
+  stateHandler: StateHandler;
+
+  spinitronClient = new SpinitronClient();
+
+  spotifyClient = new SpotifyClient();
 
   get currentNowPlaying() {
     return this.stateHandler.currentTrack;
   }
 
-  get currentSong() {
+  get currentSong(): Song {
     return this.stateHandler.currentTrack?.now_playing.song;
   }
 
-  get currentShow() {
+  get currentShow(): SpinitronPlaylist {
     return this.stateHandler.currentShow;
   }
 
@@ -46,13 +54,15 @@ export default class WBORClient extends Client {
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
     });
 
+    this.stateHandler = new StateHandler(this);
+
     this.on('ready', () => this.onReady());
     this.on('interactionCreate', (interaction) => this.onInteractionCreate(interaction));
   }
 
   get songPresenceText() {
     const currentShow = this.currentShow ?? {
-      isAutomationBear: true,
+      automation: true,
       title: '',
     };
     // remove metadata stuff from the track title
@@ -62,8 +72,8 @@ export default class WBORClient extends Client {
       ? currentShow.title
       : `"${currentShow.title}"`;
 
-    if (!currentShow.isAutomationBear) {
-      return `${this.currentSong.artist} - ${title} • ${quotedShowName}, with ${currentShow.host} 📻`;
+    if (!currentShow.automation) {
+      return `${this.currentSong.artist} - ${title} • ${quotedShowName}, with ${makeSpinitronDJNames(currentShow.personas)} 📻`;
     }
     return `${this.currentSong.artist} - ${this.currentSong.title} 🎶`;
   }
@@ -98,7 +108,7 @@ export default class WBORClient extends Client {
   }
 
   async onReady() {
-    log.info('Connected to Discord. Waiting until connected to AzuraCast');
+    log.info('Connected to Discord. Waiting until initial data is received.');
     await this.stateHandler.waitForTrack();
     await this.stateHandler.waitForShow();
     this.updatePresence();

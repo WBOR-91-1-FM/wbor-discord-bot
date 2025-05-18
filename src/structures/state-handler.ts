@@ -6,33 +6,31 @@
 import { EventEmitter } from 'events';
 import { EventSource } from 'eventsource';
 import type { NowPlayingData } from '../utils/wbor';
-import type { SpinitronShow } from '../spinitron/types';
 import {
   isShowFunctionalityAvailable,
   SSE_TRACK_FEED,
   STATION_ID,
 } from '../constants';
-import { getCurrentShow } from '../spinitron';
 import { logger } from '../utils/log';
+import type { SpinitronPlaylist } from '../spinitron/types/playlist';
+import type WBORClient from '../client';
+import { makeSpinitronDJNames } from '../spinitron/utils';
 
 const log = logger.on('states');
-
-const UPDATE_SHOW_INTERVAL = 1 * 60 * 1000;
 
 export default class StateHandler extends EventEmitter {
   currentTrack: NowPlayingData;
 
-  currentShow: SpinitronShow;
+  currentShow: SpinitronPlaylist;
 
-  constructor() {
+  constructor(public client: WBORClient) {
     super();
 
     this.currentTrack = null as unknown as NowPlayingData;
-    this.currentShow = null as unknown as SpinitronShow;
+    this.currentShow = null as unknown as SpinitronPlaylist;
     this.#connectToTrackSSE();
 
-    if (isShowFunctionalityAvailable) this.#setUpShowTrack();
-    else {
+    if (!isShowFunctionalityAvailable) {
       log.error(
         'SPINITRON_URL not set, show functionality will be unavailable.',
       );
@@ -56,28 +54,33 @@ export default class StateHandler extends EventEmitter {
       return Promise.resolve(this.currentShow);
     }
 
-    return new Promise<SpinitronShow>((resolve) => {
+    return new Promise<SpinitronPlaylist>((resolve) => {
       this.once('showChange', resolve);
     });
   }
 
   async #setUpShowTrack() {
-    const show = await getCurrentShow();
+    if (!isShowFunctionalityAvailable) return;
+
+    const show = await this.client.spinitronClient.getCurrentShow();
+
+    if (!show) {
+      log.on('spinitron').error('Failed to fetch current show');
+      return;
+    }
 
     if (!this.#areShowsTheSame(show)) {
-      log.on('spinitron').info(`WBOR is now airing ${show.title}, by ${show.host}`);
+      log.on('spinitron').info(`WBOR is now airing ${show.title}, by ${makeSpinitronDJNames(show.personas)}`);
       this.currentShow = show;
       this.emit('showChange', show);
     }
-
-    setTimeout(() => this.#setUpShowTrack(), UPDATE_SHOW_INTERVAL + 1000);
   }
 
-  #areShowsTheSame(show: SpinitronShow) {
+  #areShowsTheSame(show: SpinitronPlaylist) {
     if (!this.currentShow) return false;
     return (
       this.currentShow?.title === show.title
-      || this.currentShow?.host === show.host
+      || makeSpinitronDJNames(this.currentShow?.personas) === makeSpinitronDJNames(show.personas)
     );
   }
 
@@ -99,11 +102,11 @@ export default class StateHandler extends EventEmitter {
   }
 
   #setUpSSEEvents(es: EventSource) {
-    es.addEventListener('message', (data) => {
+    es.addEventListener('message', async (data) => {
       const parsedData = JSON.parse(data.data);
 
-      if (parsedData.connect) this.#onSSEReady(parsedData);
-      else if (parsedData.pub?.data?.np) this.#onSSENewTrack(parsedData.pub.data);
+      if (parsedData.connect) await this.#onSSEReady(parsedData);
+      else if (parsedData.pub?.data?.np) await this.#onSSENewTrack(parsedData.pub.data);
     });
 
     es.addEventListener('error', (error: any) => {
@@ -118,10 +121,10 @@ export default class StateHandler extends EventEmitter {
 
     // same thing we'd get from the track payload.
     const trackPayload = payload.connect.subs[STATION_ID].publications[0].data;
-    this.#onSSENewTrack(trackPayload);
+    return this.#onSSENewTrack(trackPayload);
   }
 
-  #onSSENewTrack(payload: Record<string, any>) {
+  async #onSSENewTrack(payload: Record<string, any>) {
     const npPayload = payload.np as NowPlayingData;
 
     if (!this.#areTracksTheSame(npPayload)) {
@@ -130,6 +133,11 @@ export default class StateHandler extends EventEmitter {
       );
 
       this.currentTrack = npPayload;
+
+      // once track changes, we have to refetch the show (more specifically, the show's spins,
+      // which will contain ISRC data so we can fetch the Spotify link).
+      await this.#setUpShowTrack();
+
       this.emit('trackChange', npPayload);
     }
   }
