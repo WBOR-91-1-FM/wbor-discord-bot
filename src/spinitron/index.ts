@@ -97,7 +97,7 @@ export default class SpinitronClient {
   ) {
     const key = isFullURL ? path : `${this.rootURL}${path}`;
     const cachedValue = this.cacheMap.get(key);
-    if (cachedValue && Date.now() - cachedValue.created < ttl) {
+    if (cachedValue && Date.now() - cachedValue.created < ttl * 1000) {
       return Promise.resolve(cachedValue.val);
     }
 
