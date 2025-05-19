@@ -9,7 +9,7 @@ import { makeSpinitronDJNames } from '../spinitron/utils';
 
 export const info: CommandInfo = {
   name: 'playing',
-  description: 'Shows the currently playing song.',
+  description: 'Shows the currently playing song and show.',
 };
 
 export default async (ctx: Context): Promise<void> => {
