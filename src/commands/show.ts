@@ -19,7 +19,7 @@ export default async (ctx: Context) => {
   }
 
   const show: SpinitronPlaylist = ctx.client.currentShow;
-  if (!show || show.automation) return ctx.reply('😵‍💫 There are no shows on air right now. Instead, the station is playing an [automated playlist](https://playlists.wbor.org/WBOR/).');
+  if (!show || show.automation) return ctx.reply('😵‍💫 There are no shows on air right now. Instead, the station is playing an [automated playlist](https://playlists.wbor.org/WBOR/?layout=1).');
 
   const embed = new WBOREmbed()
     .setTitle(show.title)
