@@ -14,10 +14,6 @@ export const info: CommandInfo = {
 };
 
 export default async (ctx: Context) => {
-  if (process.env.COLLEGE_NOT_IN_SESSION) {
-      return ctx.reply('🛫 Bowdoin College is currently on a break. WBOR is playing an [automated playlist](<https://playlists.wbor.org/WBOR/>) in the meantime.\n\nCheck [Bowdoin\'s Academic Calendar](<https://www.bowdoin.edu/academic-affairs/calendar/index.html>) for more information.\nYou can also contact WBOR management [clicking here](https://wbor.org/#contact).')
-  }
-
   const show: SpinitronPlaylist = ctx.client.currentShow;
   if (!show || show.automation) return ctx.reply('😵‍💫 There are no shows on air right now. Instead, the station is playing an [automated playlist](https://playlists.wbor.org/WBOR/?layout=1).');
 
