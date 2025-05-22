@@ -1,7 +1,9 @@
 import WBOREmbed from '../structures/wbor-embed';
 import type { CommandInfo } from '../structures/commands/command';
 import type Context from '../structures/commands/context';
-import { isShowFunctionalityAvailable } from '../constants';
+import { isShowFunctionalityAvailable, STATION_NAME } from '../constants';
+import type { SpinitronPlaylist } from '../spinitron/types/playlist';
+import { makeSpinitronDJNames } from '../spinitron/utils';
 
 export const info: CommandInfo = {
   name: 'show',
@@ -12,8 +14,8 @@ export const info: CommandInfo = {
 };
 
 export default async (ctx: Context) => {
-  const show = ctx.client.currentShow;
-  if (!show || show.isAutomationBear) return ctx.reply('😵‍💫 There are no shows on air right now.');
+  const show: SpinitronPlaylist = ctx.client.currentShow;
+  if (!show || show.automation) return ctx.reply('😵‍💫 There are no shows on air right now. Instead, the station is playing an [automated playlist](https://playlists.wbor.org/WBOR/?layout=1).');
 
   const embed = new WBOREmbed()
     .setTitle(show.title)
@@ -23,11 +25,11 @@ export default async (ctx: Context) => {
       [
         {
           name: 'Hosted by',
-          value: show.host,
+          value: makeSpinitronDJNames(show.personas),
         },
         {
           name: 'Genre',
-          value: show.genre as unknown as string,
+          value: show.category as unknown as string,
           inline: true,
         },
       ].filter((a) => a.value) as Array<{
@@ -36,7 +38,7 @@ export default async (ctx: Context) => {
         inline?: boolean;
       }>,
     )
-    .setFooter({ text: show.timeslot });
+    .setFooter({ text: show.timeslot || STATION_NAME });
 
   return ctx.reply({ embeds: [embed] });
 };

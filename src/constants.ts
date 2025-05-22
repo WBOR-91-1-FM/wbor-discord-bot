@@ -11,7 +11,7 @@ export const SSE_TRACK_FEED = process.env.AZURACAST_SSE_URL
   || 'https://azura.wbor.org/api/live/nowplaying/sse';
 
 // No defaults because this can be disabled
-export const { SPINITRON_URL } = process.env;
+export const { SPINITRON_PROXY_URL } = process.env;
 
 // The station ID for AzuraCast
 export const STATION_ID = process.env.AZURACAST_STATION_ID || 'station:wbor';
@@ -22,4 +22,6 @@ export const STATION_NAME = process.env.STATION_NAME || 'WBOR 91.1 FM';
 
 // Utilities
 // True if the Spinitron URL is set
-export const isShowFunctionalityAvailable = !!process.env.SPINITRON_URL;
+export const isShowFunctionalityAvailable = !!process.env.SPINITRON_PROXY_URL;
+// The Spotify emoji ID. Change this.
+export const SPOTIFY_EMOJI_ID = process.env.SPOTIFY_EMOJI_ID!;

@@ -1,6 +1,7 @@
 import WBOREmbed from '../structures/wbor-embed';
 import type { CommandInfo } from '../structures/commands/command';
 import type Context from '../structures/commands/context';
+import type { NowPlayingData } from '../utils/wbor';
 
 export const info: CommandInfo = {
   name: 'recent',
@@ -8,7 +9,7 @@ export const info: CommandInfo = {
 };
 
 export default async (ctx: Context): Promise<void> => {
-  const data = ctx.client.currentNowPlaying;
+  const data: NowPlayingData = ctx.client.currentNowPlaying;
 
   const recentlyPlayed = new WBOREmbed()
     .setThumbnail(data.now_playing.song.art)

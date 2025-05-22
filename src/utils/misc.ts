@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { sleep } from 'bun';
 import * as metadataFilter from '@web-scrobbler/metadata-filter';
 
 /**
@@ -47,7 +48,7 @@ export function logError(time: Date, content: string | Error): void {
     fs.appendFile(
       process.env.LOG_PATH,
       `\n\n===============================================\n${time.toString()}\n${errorContent}`,
-      (err) => {
+      (err: any) => {
         if (err) console.error(err);
       },
     );
@@ -79,4 +80,14 @@ const filter = metadataFilter.createFilter(filterSet);
  */
 export function cleanTrackTitle(title: string): string {
   return filter.filterField('track', title);
+}
+
+/**
+ * Makes the event loop sleep for a random amount of time between x and y.
+ * @param min The minimum time to sleep in ms
+ * @param max The maximum time to sleep in ms
+ */
+export function sleepRandom(min: number = 500, max: number = 1000): Promise<void> {
+  const randomTime = Math.floor(Math.random() * (max - min + 1)) + min;
+  return sleep(randomTime);
 }
