@@ -32,11 +32,11 @@ export default async (ctx: Context) => {
           value: show.category as unknown as string,
           inline: true,
         },
-      ].filter((a) => a.value) as Array<{
+      ].filter((a) => a.value) as {
         name: string;
         value: string;
         inline?: boolean;
-      }>,
+      }[],
     )
     .setFooter({ text: show.timeslot || STATION_NAME });
 

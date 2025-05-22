@@ -8,7 +8,7 @@ export interface SpinitronMultipleResultResponse<T> {
 }
 
 interface SpinitronSingleLink {
-  href: string
+  href: string;
 }
 
 type SpinitronLink = SpinitronSingleLink | SpinitronSingleLink[];

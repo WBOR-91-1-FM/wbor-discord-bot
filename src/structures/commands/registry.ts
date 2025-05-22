@@ -2,8 +2,8 @@
  * Loads commands dynamically, registers them with the Discord API, etc
  */
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   SlashCommandBuilder, REST, Routes,
 } from 'discord.js';

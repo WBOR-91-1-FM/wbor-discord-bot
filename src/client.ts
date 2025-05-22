@@ -7,7 +7,7 @@ import {
   type VoiceBasedChannel,
 } from 'discord.js';
 import StateHandler from './structures/state-handler';
-import SpinitronClient from './spinitron/index';
+import SpinitronClient from './spinitron';
 import { commandRegistry } from './structures/commands/registry';
 import Context from './structures/commands/context';
 import { cleanTrackTitle, logError } from './utils/misc';

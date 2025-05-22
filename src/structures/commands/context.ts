@@ -18,6 +18,8 @@ import {
 import type { WBORClient } from '../../client';
 import type { GuildEntity } from '../../database/entities/guilds';
 import type { UserEntity } from '../../database/entities/users';
+import type { Song } from '../../utils/wbor.ts';
+import type { SpinitronPlaylist } from '../../spinitron/types/playlist.ts';
 
 export default class Context {
   guildEntity: GuildEntity | null;
@@ -60,4 +62,33 @@ export default class Context {
   reply(data: string | InteractionReplyOptions): Promise<InteractionResponse> {
     return this.message.reply(data);
   }
+
+  // Gets the current song cover image from Spinitron or Spotify.
+  async getCurrentSongInfo(): Promise<CurrentlyPlayingSongInfo> {
+    const song: Song = this.client.currentSong;
+    const show: SpinitronPlaylist = this.client.currentShow;
+
+    const spins = await this.client.spinitronClient.getSpins();
+    const spotifyData = spins?.[0]?.isrc
+      ? await this.client.spotifyClient.getSongInfoByISRC(spins![0].isrc)
+      : undefined;
+
+    const cover: string = show.automation || song.art.includes('wbor.org')
+      ? (spotifyData?.coverImage || show.image)
+      : song.art;
+
+    return {
+      name: song.title,
+      artist: song.artist,
+      cover,
+      spotifyLink: spotifyData?.link,
+    };
+  }
+}
+
+interface CurrentlyPlayingSongInfo {
+  name: string;
+  artist: string;
+  cover: string;
+  spotifyLink?: string;
 }

@@ -3,7 +3,7 @@
  * and uses EventEmitter so the bot can react to these changes.
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { EventSource } from 'eventsource';
 import type { NowPlayingData } from '../utils/wbor';
 import {

@@ -10,7 +10,7 @@ import { makeSpinitronSpins, type SpinitronSpin } from './types/spin';
 export default class SpinitronClient {
   rootURL = process.env.SPINITRON_PROXY_URL;
 
-  cacheMap = new Map<string, { created: number, val: any }>();
+  cacheMap = new Map<string, { created: number; val: any }>();
 
   async getCurrentShow(): Promise<SpinitronPlaylist | undefined> {
     const playlists = await this.getPlaylists();
@@ -53,7 +53,7 @@ export default class SpinitronClient {
   }
 
   async fetchItemLinks<T extends SpinitronItem>(item: T): Promise<T> {
-    const result = item as T;
+    const result = item;
 
     const person = getItemOrArray(item._links.persona || item._links.personas || []);
     if (person.length > 0) {
@@ -78,7 +78,7 @@ export default class SpinitronClient {
     return result;
   }
 
-  async multipleCachedRequests(paths: string[], ttl: number = 60, full: boolean = false) {
+  async multipleCachedRequests(paths: string[], ttl = 60, full = false) {
     return Promise.all(paths.map((pt) => this.cachedRequest(pt, ttl, full, true)));
   }
 
@@ -91,9 +91,9 @@ export default class SpinitronClient {
    */
   async cachedRequest(
     path: string,
-    ttl: number = 60,
-    isFullURL: boolean = false,
-    jittered: boolean = false,
+    ttl = 60,
+    isFullURL = false,
+    jittered = false,
   ) {
     const key = isFullURL ? path : `${this.rootURL}${path}`;
     const cachedValue = this.cacheMap.get(key);
@@ -114,7 +114,7 @@ export default class SpinitronClient {
    * @param path The path to the resource
    * @param isFullURL Whether the path is a full URL or not.
    */
-  async request(path: string, isFullURL: boolean = true) {
+  async request(path: string, isFullURL = true) {
     return fetchWithRetries(isFullURL ? path : `${this.rootURL}${path}`, {
       retryOptions: {
         maxRetries: 3,

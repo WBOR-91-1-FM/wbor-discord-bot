@@ -75,13 +75,21 @@ export class Logger {
     return currentLevelValue <= levelValue;
   }
 
-  debug(message: string) { this.log(LogLevel.DEBUG, message); }
+  debug(message: string) {
+    this.log(LogLevel.DEBUG, message);
+  }
 
-  info(message: string) { this.log(LogLevel.INFO, message); }
+  info(message: string) {
+    this.log(LogLevel.INFO, message);
+  }
 
-  warn(message: string) { this.log(LogLevel.WARN, message); }
+  warn(message: string) {
+    this.log(LogLevel.WARN, message);
+  }
 
-  error(message: string) { this.log(LogLevel.ERROR, message); }
+  error(message: string) {
+    this.log(LogLevel.ERROR, message);
+  }
 
   err(e: Error, message: string | undefined = undefined): void {
     if (message) {

@@ -3,10 +3,15 @@ import { logger } from '../utils/log';
 
 const log = logger.on('spotify');
 
+interface SpotifySongData {
+  link: string;
+  coverImage: string | null;
+}
+
 export default class SpotifyClient {
   private client: SpotifyWebApi | null = null;
 
-  private cache = new Map<string, string>();
+  private cache = new Map<string, SpotifySongData>();
 
   constructor() {
     if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
@@ -21,10 +26,10 @@ export default class SpotifyClient {
   }
 
   /**
-   * Fetches the song link from Spotify given a ISRC code.
+   * Fetches the song info from Spotify given a ISRC code.
    * @param isrc The ISRC code of the song.
    */
-  async getSongLink(isrc: string): Promise<string | undefined> {
+  async getSongInfoByISRC(isrc: string): Promise<SpotifySongData | undefined> {
     if (!this.client) return undefined;
     if (this.cache.has(isrc)) {
       return this.cache.get(isrc);
@@ -41,8 +46,14 @@ export default class SpotifyClient {
           return undefined;
         }
 
-        this.cache.set(isrc, link);
-        return link;
+        const coverImage = tracks?.[0]?.album?.images?.[0]?.url ?? null;
+        const songData: SpotifySongData = {
+          link,
+          coverImage,
+        };
+
+        this.cache.set(isrc, songData);
+        return songData;
       }
 
       log.warn(`No track found for ISRC: ${isrc}`);

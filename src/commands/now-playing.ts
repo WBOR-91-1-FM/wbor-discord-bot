@@ -13,25 +13,16 @@ export const info: CommandInfo = {
 };
 
 export default async (ctx: Context): Promise<void> => {
-  const song: Song = ctx.client.currentSong;
+  const songInfo = await ctx.getCurrentSongInfo();
   const show: SpinitronPlaylist = ctx.client.currentShow;
-
-  // if the currently playing song doesn't have a cover,
-  // use the current show's image (unless the show doesn't have an image).
-  const songCover = song.art.includes('wbor.org') && show.image ? show.image : song.art;
-
-  const spins = await ctx.client.spinitronClient.getSpins();
-  const spotifyLink = spins?.[0]?.isrc
-    ? await ctx.client.spotifyClient.getSongLink(spins![0].isrc)
-    : undefined;
 
   let nowPlayingEmbed = new WBOREmbed()
     .setTitle(`Currently playing on ${STATION_CALL_SIGN}`)
     .addFields({
-      name: song.artist,
-      value: song.title,
+      name: songInfo.artist,
+      value: songInfo.name,
     })
-    .setThumbnail(songCover);
+    .setThumbnail(songInfo.cover);
 
   if (show && !show.automation) {
     nowPlayingEmbed = nowPlayingEmbed
@@ -40,16 +31,16 @@ export default async (ctx: Context): Promise<void> => {
       .setFooter({ text: `Hosted by ${makeSpinitronDJNames(show.personas)}` });
 
     nowPlayingEmbed.setFields([
-      { name: 'Now Playing', value: `**${song.artist}** - ${song.title}` },
+      { name: 'Now Playing', value: `**${songInfo.artist}** - ${songInfo.name}` },
     ]);
   }
 
   let components: ActionRowBuilder | undefined;
-  if (spotifyLink) {
+  if (songInfo.spotifyLink) {
     const button = new ButtonBuilder()
-      .setLabel('Listen on Spotify')
+      .setLabel('Listen to song on Spotify')
       .setStyle(ButtonStyle.Link)
-      .setURL(spotifyLink)
+      .setURL(songInfo.spotifyLink)
       .setEmoji(SPOTIFY_EMOJI_ID);
 
     components = new ActionRowBuilder().addComponents(button);

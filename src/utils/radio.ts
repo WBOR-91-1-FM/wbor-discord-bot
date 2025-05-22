@@ -10,7 +10,7 @@ import {
   entersState,
   AudioResource,
 } from '@discordjs/voice';
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { Client, type VoiceBasedChannel } from 'discord.js';
 import type WBORClient from '../client';
 import type { Song } from './wbor';

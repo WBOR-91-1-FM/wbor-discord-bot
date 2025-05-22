@@ -15,7 +15,7 @@ export default async (ctx: Context): Promise<void> => {
     if (command.info.private) return;
 
     commands.push({
-      name: `${command.info.name}`,
+      name: command.info.name,
       value: command.info.description,
     });
   });

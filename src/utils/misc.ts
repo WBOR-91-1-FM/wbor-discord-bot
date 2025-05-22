@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import { sleep } from 'bun';
 import * as metadataFilter from '@web-scrobbler/metadata-filter';
 
@@ -25,7 +25,7 @@ export function padTime(time: number): string {
  */
 export function unixConvert(
   time: number,
-  timezone: string = 'America/New_York',
+  timezone = 'America/New_York',
 ): string {
   const convertedTime = new Date(time * 1000).toLocaleString('en-US', {
     timeZone: timezone,
@@ -87,7 +87,7 @@ export function cleanTrackTitle(title: string): string {
  * @param min The minimum time to sleep in ms
  * @param max The maximum time to sleep in ms
  */
-export function sleepRandom(min: number = 500, max: number = 1000): Promise<void> {
+export function sleepRandom(min = 500, max = 1000): Promise<void> {
   const randomTime = Math.floor(Math.random() * (max - min + 1)) + min;
   return sleep(randomTime);
 }

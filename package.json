@@ -35,6 +35,9 @@
     "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.2.9",
+    "@eslint/js": "^9.27.0",
+    "@stylistic/eslint-plugin": "^3.1.0",
     "@types/bun": "^1.2.13",
     "@types/pg": "^8.15.2",
     "@types/spotify-web-api-node": "^5.0.11",
@@ -42,8 +45,10 @@
     "@typescript-eslint/parser": "^8.32.1",
     "drizzle-kit": "^0.31.1",
     "eslint": "^9.27.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-airbnb-typescript": "^18.0.0",
-    "eslint-plugin-import": "^2.31.0"
+    "eslint-config-airbnb-extended": "^1.0.11",
+    "eslint-import-resolver-typescript": "^4.3.5",
+    "eslint-plugin-import-x": "^4.12.2",
+    "eslint-plugin-n": "^17.18.0",
+    "typescript-eslint": "^8.32.1"
   }
 }
