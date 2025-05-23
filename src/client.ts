@@ -93,7 +93,6 @@ export default class WBORClient extends Client {
 
   async joinChannels() {
     const voiceChannels = await getAllExistingVoiceChannels();
-    log.debug(`We'll connect to ${voiceChannels.length} voice channels now.`)
 
     try {
       await Promise.all(voiceChannels.map(async ({ guildId, voiceChannelId }) => {
@@ -102,6 +101,8 @@ export default class WBORClient extends Client {
 
         await this.radioManager.playOnChannel(voiceChannelId!, guildId)
       }));
+
+      this.radioManager.startHandlingFailures()
     } catch (e: any) {
       log.err(e, 'An error occurred while trying to connect to the default voice channels!')
     }

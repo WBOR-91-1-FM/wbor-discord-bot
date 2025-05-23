@@ -1,4 +1,4 @@
-import { eq, isNotNull } from 'drizzle-orm';
+import { eq, isNotNull, and } from 'drizzle-orm';
 import guilds from '../schemas/guild';
 import db from '..';
 
@@ -35,6 +35,22 @@ export const getAllExistingVoiceChannels = async () => {
     guildId: guild.id
   }));
 };
+
+/**
+* Tells us whether this server has a set voice channel
+*/
+export const hasVoiceChannelSet = async (guildId: string) => {
+  const gds = await db
+    .select()
+    .from(guilds)
+    .where(and(
+      isNotNull(guilds.voiceChannelId),
+      eq(guilds.id, guildId)
+    ))
+    .execute();
+
+  return !!gds[0];
+}
 
 export class GuildEntity {
   constructor(public data: typeof guilds.$inferSelect) { }

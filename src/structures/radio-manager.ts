@@ -1,7 +1,8 @@
-import { Manager, Player, Track } from 'moonlink.js';
+import { Manager, Node, Player, Track, type INode } from 'moonlink.js';
 import type WBORClient from '../client.ts';
 import { logger } from '../utils/log.ts';
 import type Context from './commands/context.ts';
+import { hasVoiceChannelSet } from '../database/entities/guilds.ts';
 
 const log = logger.on('lavalink');
 
@@ -20,17 +21,31 @@ export default class RadioManager {
     },
     sendPayload: (guildId: string, payload: string) => this.sendPayload(guildId, payload),
   });
+  handleFailures = false
 
   constructor(
     public client: WBORClient,
   ) {
     this.manager.on('nodeConnected', () => this.onConnected());
+    this.manager.on('nodeAutoResumed', (n: INode, p: Player[]) => this.onNodeAutoResume(n, p))
     this.manager.on('queueEnd', (player: Player) => this.onQueueEnd(player));
+    this.manager.on('socketClosed', (player) => this.onPlayerDisconnect(player))
   }
 
   sendPayload(guildId: string, payload: string) {
     const guild = this.client.guilds.cache.get(guildId);
     if (guild) guild.shard.send(JSON.parse(payload));
+  }
+
+  // this is a thing because during restarts, lavalink will emit socketClosed, recreating the player.
+  // the problem is, players are automatically created on startup from db data. so, to avoid creating
+  // multiple players, we ignore player issue events during startup.
+  startHandlingFailures() {
+    this.handleFailures = true
+  }
+
+  isConnectedToGuild(guildId: string) {
+    return this.manager.getPlayer(guildId)
   }
 
   onConnected() {
@@ -49,6 +64,20 @@ export default class RadioManager {
     this.manager.packetUpdate(d);
   }
 
+  onNodeAutoResume(node: INode, players: Player[]) {
+    log.info(`Lavalink node autoresumed ${players.length} after restart`)
+  }
+
+  async onPlayerDisconnect(player: Player) {
+    if (!this.handleFailures) return
+
+    const hasVC = await hasVoiceChannelSet(player.guildId)
+    if (hasVC) {
+      log.debug(`Player disconnected from guild ID ${player.guildId}; reconnecting...`)
+      await this.playOnChannel(player.voiceChannelId, player.guildId)
+    }
+  }
+
   async onQueueEnd(player: Player) {
     log.warn('Queue ended? Refreshing mount URL and reconnecting in 2s...')
     this.streamURL = undefined
@@ -59,14 +88,15 @@ export default class RadioManager {
   }
 
   async playOnChannel(voiceChannelId: string, guildId: string) {
-    if (this.manager.getPlayer(guildId)) {
-      if (this.manager.getPlayer(guildId).playing) return // we're already playing...
+    const pl = this.manager.getPlayer(guildId)
+    if (pl) {
+      if (pl.playing) return // we're already playing...
     }
 
     const player = this.manager.createPlayer({
       voiceChannelId,
       guildId,
-      textChannelId: '',
+      textChannelId: '', // this is optional. useful for music bots, not so much for radio
       autoPlay: true
     })
 
@@ -101,8 +131,10 @@ export default class RadioManager {
     id: string,
     song: { artist: string; title: string },
   ): Promise<void> {
+    await this.client.stateHandler.waitForTrack();
     try {
       const status = `🎶 ${song.artist} - ${song.title}`;
+      log.debug(`Setting ${id} to ${status}`)
 
       // Undocumented Discord API for setting voice channel status
       await fetch(`https://discord.com/api/v9/channels/${id}/voice-status`, {
@@ -127,24 +159,31 @@ export default class RadioManager {
     // Return cached URL if available
     if (this.streamURL) return this.streamURL;
 
-    const response = await fetch(process.env.AZURACAST_API_URL as string);
-    const data = (await response.json()) as { mounts: { url: string }[] };
+    try {
+      const response = await fetch(process.env.AZURACAST_API_URL as string);
+      const data = (await response.json()) as { mounts: { url: string }[] };
 
-    log.debug(`${data.mounts.length} mounts found:\n  -> ${data.mounts.map((mount: any) => `(${mount.id}) ${mount.name} (${mount.url})`).join('\n  -> ')}`);
+      log.debug(`${data.mounts.length} mounts found:\n  -> ${data.mounts.map((mount: any) => `(${mount.id}) ${mount.name} (${mount.url})`).join('\n  -> ')}`);
 
-    let mount: any = data.mounts.find((m: any) => m.is_default) || data.mounts[0];
-    if (process.env.AZURACAST_MOUNT_ID) {
-      const pickedMount = data.mounts.find((m: any) => m.id === process.env.AZURACAST_MOUNT_ID);
-      if (!pickedMount) {
-        throw new Error(`Mount ID ${process.env.AZURACAST_MOUNT_ID} not found.`);
+      let mount: any = data.mounts.find((m: any) => m.is_default) || data.mounts[0];
+      if (process.env.AZURACAST_MOUNT_ID) {
+        const pickedMount = data.mounts.find((m: any) => m.id === process.env.AZURACAST_MOUNT_ID);
+        if (!pickedMount) {
+          throw new Error(`Mount ID ${process.env.AZURACAST_MOUNT_ID} not found.`);
+        }
+        mount = pickedMount;
       }
-      mount = pickedMount;
-    }
-    if (!mount) throw new Error('No mounts were found.');
+      if (!mount) throw new Error('No mounts were found.');
 
-    log.info(`Using mount ID ${mount.id} (${mount.name}; ${mount.url})`);
-    this.streamURL = mount.url;
-    return this.streamURL!;
+      log.info(`Using mount ID ${mount.id} (${mount.name}; ${mount.url})`);
+      this.streamURL = mount.url;
+      return this.streamURL!;
+    } catch (e: any) {
+      log.err(e, 'Failed to get mount points from AzuraCast. Retrying in 2s...')
+      return new Promise((r) => {
+        setTimeout(() => r(this.fetchStreamURL()), 2000)
+      })
+    }
   }
 
   disconnectFromChannel(guildId: string) {
