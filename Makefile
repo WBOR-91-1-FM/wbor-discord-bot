@@ -11,6 +11,10 @@ build:
 	@echo "Building images..."
 	COMPOSE_BAKE=$(COMPOSE_BAKE) $(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) build
 
+clean:
+	@echo "Deleting Docker image..."
+	$(DOCKER_TOOL) image rm -f wborfm/discord-bot:latest
+
 up: build
 	@echo "Starting containers..."
 	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) up -d
@@ -24,6 +28,7 @@ logs:
 	$(DOCKER_TOOL) compose -p $(PROJECT_NAME) -f $(COMPOSE_FILE) logs -f
 
 restart: down up
+rebuild: down clean up
 
 watch:
 	@echo "Watching for file changes and restarting containers..."
