@@ -32,7 +32,7 @@ export default class StateHandler extends EventEmitter {
 
     if (!isShowFunctionalityAvailable) {
       log.error(
-        'SPINITRON_URL not set, show functionality will be unavailable.',
+        'SPINITRON_PROXY_URL not set, show functionality will be unavailable.',
       );
     }
   }
