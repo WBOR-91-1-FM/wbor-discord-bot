@@ -34,4 +34,4 @@ Type `/` in a server the bot is in and you'll see the available commands.
 - [x] update bot presence on song changes;
 - [x] dockerize it;
 - [x] show current show info when appropiate;
-- [ ] stop scraping the spinitron page for show data (use API proxy);
+- [x] stop scraping the spinitron page for show data (use API proxy);
