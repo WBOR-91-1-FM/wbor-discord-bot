@@ -3,6 +3,7 @@ import type WBORClient from '../client.ts';
 import { logger } from '../utils/log.ts';
 import type Context from './commands/context.ts';
 import { hasVoiceChannelSet } from '../database/entities/guilds.ts';
+import { sleep } from 'bun'
 
 const log = logger.on('lavalink');
 
@@ -30,6 +31,7 @@ export default class RadioManager {
     this.manager.on('nodeAutoResumed', (n: INode, p: Player[]) => this.onNodeAutoResume(n, p))
     this.manager.on('queueEnd', (player: Player) => this.onQueueEnd(player));
     this.manager.on('socketClosed', (player) => this.onPlayerDisconnect(player))
+    this.manager.on('nodeError', (n: INode, err: Error) => this.onNodeError(err))
   }
 
   sendPayload(guildId: string, payload: string) {
@@ -52,8 +54,12 @@ export default class RadioManager {
     log.info('Successfully connected to node.');
   }
 
-  onErr(e: any) {
-    log.error(`Lavalink node encountered an error: ${e}`);
+  async onNodeError(e: any) {
+    log.err(e, `Lavalink node encountered an error. Waiting a few seconds until reconnecting players.`);
+    await sleep(5000)
+    this.handleFailures = false
+    await this.client.joinChannels()
+    this.handleFailures = true
   }
 
   onClientReady() {
