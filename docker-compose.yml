@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres
+      - LAVALINK_HOST=lavalink
+      - LAVALINK_PASSWORD=youshallnotpass
       - DISCORD_UPDATE_COMMANDS
       - TZ
     env_file:
@@ -16,6 +18,24 @@ services:
         max-size: "30m"
         max-file: "30"
     restart: unless-stopped
+
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:4
+    container_name: lavalink
+    restart: unless-stopped
+    environment:
+      - _JAVA_OPTIONS=-Xmx6G
+      - SERVER_PORT=2333
+      - LAVALINK_SERVER_PASSWORD=youshallnotpass
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "30m"
+        max-file: "30"
+    volumes:
+      - ./lavalink.yml:/opt/Lavalink/application.yml
+    ports:
+      - 2333:2333
 
   postgres:
     image: postgres:16

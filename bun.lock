@@ -14,6 +14,7 @@
         "fetch-with-retries": "^2.3.0",
         "libsodium-wrappers": "^0.7.15",
         "mime-types": "^3.0.1",
+        "moonlink.js": "^4.6.3",
         "pg": "^8.16.0",
         "spotify-web-api-node": "^5.0.2",
       },
@@ -616,6 +617,8 @@
     "mime-types": ["mime-types@3.0.1", "", { "dependencies": { "mime-db": "^1.54.0" } }, "sha512-xRc4oEhT6eaBpU1XF7AjpOFD+xQmXNB5OVKwp4tqCuBpHLS/ZbBDrc07mYTDqVMg6PfxUjjNp85O6Cd2Z/5HWA=="],
 
     "minimatch": ["minimatch@3.1.2", "", { "dependencies": { "brace-expansion": "^1.1.7" } }, "sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw=="],
+
+    "moonlink.js": ["moonlink.js@4.6.3", "", { "dependencies": { "ws": "^8.18.1" } }, "sha512-MXnaNZ0HDbnFWd1DaWt+FNP0iMW7BBVv/7GN4qMPU4x/CO2+RGM2i11IrSCJ3B7gn+EiFWtbyDtlG1/QFo5OUw=="],
 
     "ms": ["ms@2.1.2", "", {}, "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="],
 

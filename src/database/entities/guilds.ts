@@ -30,16 +30,27 @@ export const getAllExistingVoiceChannels = async () => {
     .where(isNotNull(guilds.voiceChannelId))
     .execute();
 
-  return gds.map((guild) => guild.voiceChannelId);
+  return gds.map((guild) => ({
+    voiceChannelId: guild.voiceChannelId,
+    guildId: guild.id
+  }));
 };
 
 export class GuildEntity {
-  constructor(public data: typeof guilds.$inferSelect) {}
+  constructor(public data: typeof guilds.$inferSelect) { }
 
   async setVoiceChannel(channelId: string) {
     await db
       .update(guilds)
       .set({ voiceChannelId: channelId })
+      .where(eq(guilds.id, this.data.id))
+      .execute();
+  }
+
+  async unsetVoiceChannel() {
+    await db
+      .update(guilds)
+      .set({ voiceChannelId: null })
       .where(eq(guilds.id, this.data.id))
       .execute();
   }

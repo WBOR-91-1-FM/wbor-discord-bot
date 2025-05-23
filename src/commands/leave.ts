@@ -34,7 +34,8 @@ export default async (ctx: Context): Promise<void> => {
     return;
   }
 
-  getVoiceConnection(ctx.message.guild.id)?.destroy();
+  ctx.client.radioManager.disconnectFromChannel(ctx.message.guild.id);
 
+  await ctx.guildEntity?.unsetVoiceChannel();
   await ctx.message.reply('👋 Bye.');
 };

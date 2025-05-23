@@ -15,7 +15,7 @@ import {
   User,
   type VoiceBasedChannel,
 } from 'discord.js';
-import type { WBORClient } from '../../client';
+import type WBORClient from '../../client';
 import type { GuildEntity } from '../../database/entities/guilds';
 import type { UserEntity } from '../../database/entities/users';
 import type { Song } from '../../utils/wbor.ts';
@@ -61,6 +61,10 @@ export default class Context {
 
   reply(data: string | InteractionReplyOptions): Promise<InteractionResponse> {
     return this.message.reply(data);
+  }
+
+  defer() {
+    return this.message.deferReply()
   }
 
   // Gets the current song cover image from Spinitron or Spotify.

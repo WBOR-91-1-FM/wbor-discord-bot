@@ -31,6 +31,7 @@
     "fetch-with-retries": "^2.3.0",
     "libsodium-wrappers": "^0.7.15",
     "mime-types": "^3.0.1",
+    "moonlink.js": "^4.6.3",
     "pg": "^8.16.0",
     "spotify-web-api-node": "^5.0.2"
   },

@@ -11,11 +11,6 @@ import SpinitronClient from './spinitron';
 import { commandRegistry } from './structures/commands/registry';
 import Context from './structures/commands/context';
 import { cleanTrackTitle, logError } from './utils/misc';
-import {
-  playRadio,
-  updateAllChannelStatuses,
-  updateChannelStatus,
-} from './utils/radio';
 import type { NowPlayingData, Song } from './utils/wbor';
 import {
   getAllExistingVoiceChannels,
@@ -27,15 +22,15 @@ import { logger } from './utils/log';
 import type { SpinitronPlaylist } from './spinitron/types/playlist';
 import SpotifyClient from './structures/spotify-client';
 import { makeSpinitronDJNames } from './spinitron/utils';
+import RadioManager from './structures/radio-manager';
 
 const log = logger.on('client');
 
 export default class WBORClient extends Client {
   stateHandler: StateHandler;
-
   spinitronClient = new SpinitronClient();
-
   spotifyClient = new SpotifyClient();
+  radioManager: RadioManager;
 
   get currentNowPlaying() {
     return this.stateHandler.currentTrack;
@@ -55,8 +50,10 @@ export default class WBORClient extends Client {
     });
 
     this.stateHandler = new StateHandler(this);
+    this.radioManager = new RadioManager(this);
 
     this.on('ready', () => this.onReady());
+    this.on('raw', (d: any) => this.radioManager.onRawPacket(d));
     this.on('interactionCreate', (interaction) => this.onInteractionCreate(interaction));
   }
 
@@ -85,7 +82,10 @@ export default class WBORClient extends Client {
   setUpPresenceUpdates() {
     this.stateHandler.on('trackChange', async (np: NowPlayingData) => {
       this.updatePresence();
-      await updateAllChannelStatuses(this, np.now_playing.song);
+      await this.radioManager.updateAllChannelStatus({
+        title: np.now_playing.song.title,
+        artist: np.now_playing.song.artist
+      })
     });
 
     this.stateHandler.on('showChange', () => this.updatePresence());
@@ -93,22 +93,23 @@ export default class WBORClient extends Client {
 
   async joinChannels() {
     const voiceChannels = await getAllExistingVoiceChannels();
+    log.debug(`We'll connect to ${voiceChannels.length} voice channels now.`)
 
-    voiceChannels.map(async (vc) => {
-      const channel = (await this.channels.fetch(vc!)) as VoiceBasedChannel;
-      if (!channel || !channel?.isVoiceBased()) return;
+    try {
+      await Promise.all(voiceChannels.map(async ({ guildId, voiceChannelId }) => {
+        const channel = (await this.channels.fetch(voiceChannelId!)) as VoiceBasedChannel;
+        if (!channel || !channel?.isVoiceBased()) return;
 
-      await playRadio(channel)
-        .then(() => updateChannelStatus(this, channel.id, this.currentSong))
-        .catch((err) => log.err(
-          err,
-          `failed to play radio in ${channel.name} (${channel.id})`,
-        ));
-    });
+        await this.radioManager.playOnChannel(voiceChannelId!, guildId)
+      }));
+    } catch (e: any) {
+      log.err(e, 'An error occurred while trying to connect to the default voice channels!')
+    }
   }
 
   async onReady() {
     log.info('Connected to Discord. Waiting until initial data is received.');
+    this.radioManager.onClientReady();
     await this.stateHandler.waitForTrack();
     await this.stateHandler.waitForShow();
     this.updatePresence();

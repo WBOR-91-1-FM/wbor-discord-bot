@@ -1,6 +1,5 @@
 import { getVoiceConnection } from '@discordjs/voice';
 import { GuildMember } from 'discord.js';
-import * as radio from '../utils/radio';
 import type { CommandInfo } from '../structures/commands/command';
 import type Context from '../structures/commands/context';
 
@@ -22,17 +21,13 @@ export default async (ctx: Context): Promise<void> => {
   // we tell the bot to join this voice channel automatically later on
   ctx.guildEntity?.setVoiceChannel(member.voice.channel.id);
 
-  if (getVoiceConnection(ctx.message.guild!.id)) {
-    getVoiceConnection(ctx.message.guild!.id)?.destroy();
+  const conn = getVoiceConnection(ctx.message.guild!.id)
+  if (conn) {
+    ctx.client.radioManager.disconnectFromChannel(ctx.message.guild!.id);
   }
 
-  radio.playRadio(member.voice.channel);
-
-  await radio.updateChannelStatus(
-    ctx.client,
-    member.voice.channel.id,
-    ctx.client.currentSong,
-  );
+  await ctx.defer()
+  await ctx.client.radioManager.playOnChannel(member.voice.channel.id, member.guild.id)
 
   await ctx.message.reply(
     `📻 You'll now be listening to **${ctx.client.currentSong.title}** on <#${member.voice.channel.id}>.`,

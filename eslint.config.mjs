@@ -10,6 +10,7 @@ import path from 'node:path';
 import { includeIgnoreFile } from '@eslint/compat';
 import js from '@eslint/js';
 import { configs, plugins } from 'eslint-config-airbnb-extended';
+import n from 'eslint-plugin-n';
 
 export const projectRoot = path.resolve('.');
 export const gitignorePath = path.resolve(projectRoot, '.gitignore');
@@ -51,4 +52,11 @@ export default [
   ...nodeConfig,
   // TypeScript Config
   ...typescriptConfig,
+  {
+    plugins: { n },
+    rules: {
+      'n/no-unsupported-features/node-builtins': 'off',
+      radix: 'off',
+    },
+  },
 ];

@@ -25,17 +25,3 @@ export interface NowPlayingData {
     url?: string;
   }[];
 }
-
-/**
- * Fetches the currently playing song and recent history from WBOR
- * @returns Promise that resolves to the now playing data
- */
-export const getNowPlaying = async (): Promise<NowPlayingData> => {
-  const response = await fetch(`${WBOR_API_URL}/nowplaying`);
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
-  }
-
-  return response.json() as Promise<NowPlayingData>;
-};
