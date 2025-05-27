@@ -4,6 +4,7 @@ import {
   GatewayIntentBits,
   type Interaction,
   MessageFlags,
+  Status,
   type VoiceBasedChannel,
 } from 'discord.js';
 import StateHandler from './structures/state-handler';
@@ -12,24 +13,24 @@ import { commandRegistry } from './structures/commands/registry';
 import Context from './structures/commands/context';
 import { cleanTrackTitle, logError } from './utils/misc';
 import type { NowPlayingData, Song } from './utils/wbor';
-import {
-  getAllExistingVoiceChannels,
-  getOrCreateGuild,
-  GuildEntity,
-} from './database/entities/guilds';
+import { getAllExistingVoiceChannels, getOrCreateGuild, GuildEntity } from './database/entities/guilds';
 import { getOrCreateUser, UserEntity } from './database/entities/users';
 import { logger } from './utils/log';
 import type { SpinitronPlaylist } from './spinitron/types/playlist';
 import SpotifyClient from './structures/spotify-client';
 import { makeSpinitronDJNames } from './spinitron/utils';
 import RadioManager from './structures/radio-manager';
+import { isShowFunctionalityAvailable } from './constants';
 
 const log = logger.on('client');
 
 export default class WBORClient extends Client {
   stateHandler: StateHandler;
+
   spinitronClient = new SpinitronClient();
+
   spotifyClient = new SpotifyClient();
+
   radioManager: RadioManager;
 
   get currentNowPlaying() {
@@ -55,6 +56,7 @@ export default class WBORClient extends Client {
     this.on('ready', () => this.onReady());
     this.on('raw', (d: any) => this.radioManager.onRawPacket(d));
     this.on('interactionCreate', (interaction) => this.onInteractionCreate(interaction));
+    this.serveHealthEndpoint();
   }
 
   get songPresenceText() {
@@ -84,8 +86,8 @@ export default class WBORClient extends Client {
       this.updatePresence();
       await this.radioManager.updateAllChannelStatus({
         title: np.now_playing.song.title,
-        artist: np.now_playing.song.artist
-      })
+        artist: np.now_playing.song.artist,
+      });
     });
 
     this.stateHandler.on('showChange', () => this.updatePresence());
@@ -99,12 +101,12 @@ export default class WBORClient extends Client {
         const channel = (await this.channels.fetch(voiceChannelId!)) as VoiceBasedChannel;
         if (!channel || !channel?.isVoiceBased()) return;
 
-        await this.radioManager.playOnChannel(voiceChannelId!, guildId)
+        await this.radioManager.playOnChannel(voiceChannelId!, guildId);
       }));
 
-      this.radioManager.startHandlingFailures()
+      this.radioManager.startHandlingFailures();
     } catch (e: any) {
-      log.err(e, 'An error occurred while trying to connect to the default voice channels!')
+      log.err(e, 'An error occurred while trying to connect to the default voice channels!');
     }
   }
 
@@ -196,6 +198,32 @@ export default class WBORClient extends Client {
           type: ActivityType.Listening,
         },
       ],
+    });
+  }
+
+  // Test if the bot is healthy. In our context, that means:
+  // 1. being connected to Discord and Lavalink
+  // 2. having a current track and show (if applicable)
+  isHealthy(): boolean {
+    return (
+      this.ws.status === Status.Ready // WebSocket is connected
+        && this.radioManager.connected // Lavalink is connected
+        && this.stateHandler.currentTrack !== null // Current track is set
+        && (this.stateHandler.currentShow !== null || !isShowFunctionalityAvailable) // Show
+    );
+  }
+
+  serveHealthEndpoint() {
+    Bun.serve({
+      routes: {
+        '/health': () => {
+          if (this.isHealthy()) {
+            return new Response('OK', { status: 200 });
+          }
+          return new Response('Unhealthy...', { status: 503 });
+        },
+      },
+      port: 3000,
     });
   }
 }

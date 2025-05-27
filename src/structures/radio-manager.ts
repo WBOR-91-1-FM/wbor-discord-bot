@@ -1,14 +1,20 @@
-import { Manager, Node, Player, Track, type INode } from 'moonlink.js';
+import {
+  Manager, Node, Player, Track, type INode,
+} from 'moonlink.js';
+import { sleep } from 'bun';
 import type WBORClient from '../client.ts';
 import { logger } from '../utils/log.ts';
-import type Context from './commands/context.ts';
 import { hasVoiceChannelSet } from '../database/entities/guilds.ts';
-import { sleep } from 'bun'
 
 const log = logger.on('lavalink');
 
 export default class RadioManager {
-  streamURL: string | undefined
+  streamURL: string | undefined;
+
+  connected = false;
+
+  handleFailures = false;
+
   manager = new Manager({
     nodes: [{
       host: process.env.LAVALINK_HOST!,
@@ -22,16 +28,16 @@ export default class RadioManager {
     },
     sendPayload: (guildId: string, payload: string) => this.sendPayload(guildId, payload),
   });
-  handleFailures = false
 
   constructor(
     public client: WBORClient,
   ) {
-    this.manager.on('nodeConnected', () => this.onConnected());
-    this.manager.on('nodeAutoResumed', (n: INode, p: Player[]) => this.onNodeAutoResume(n, p))
+    this.manager.on('nodeConnected', () => this.onNodeConnected());
+    this.manager.on('nodeDisconnect', () => this.onNodeDisconnected());
+    this.manager.on('nodeAutoResumed', (n: INode, p: Player[]) => this.onNodeAutoResume(n, p));
     this.manager.on('queueEnd', (player: Player) => this.onQueueEnd(player));
-    this.manager.on('socketClosed', (player) => this.onPlayerDisconnect(player))
-    this.manager.on('nodeError', (n: INode, err: Error) => this.onNodeError(err))
+    this.manager.on('socketClosed', (player) => this.onPlayerDisconnect(player));
+    this.manager.on('nodeError', (n: INode, err: Error) => this.onNodeError(err));
   }
 
   sendPayload(guildId: string, payload: string) {
@@ -39,27 +45,35 @@ export default class RadioManager {
     if (guild) guild.shard.send(JSON.parse(payload));
   }
 
-  // this is a thing because during restarts, lavalink will emit socketClosed, recreating the player.
-  // the problem is, players are automatically created on startup from db data. so, to avoid creating
+  // this is a thing because during restarts, lavalink will emit socketClosed, recreating the player
+  // the problem is, players are automatically created on startup from db data. to avoid creating
   // multiple players, we ignore player issue events during startup.
   startHandlingFailures() {
-    this.handleFailures = true
+    this.handleFailures = true;
   }
 
   isConnectedToGuild(guildId: string) {
-    return this.manager.getPlayer(guildId)
+    return this.manager.getPlayer(guildId);
   }
 
-  onConnected() {
+  onNodeConnected() {
     log.info('Successfully connected to node.');
+    this.connected = true;
+  }
+
+  onNodeDisconnected() {
+    log.warn('Lavalink node disconnected. Will reconnect.');
+    this.connected = false;
+    this.handleFailures = false; // stop handling failures until we reconnect
+    this.manager.nodes.init();
   }
 
   async onNodeError(e: any) {
-    log.err(e, `Lavalink node encountered an error. Waiting a few seconds until reconnecting players.`);
-    await sleep(5000)
-    this.handleFailures = false
-    await this.client.joinChannels()
-    this.handleFailures = true
+    log.err(e, 'Lavalink node encountered an error. Waiting a few seconds until reconnecting.');
+    await sleep(5000);
+    this.handleFailures = false;
+    await this.client.joinChannels();
+    this.handleFailures = true;
   }
 
   onClientReady() {
@@ -71,66 +85,67 @@ export default class RadioManager {
   }
 
   onNodeAutoResume(node: INode, players: Player[]) {
-    log.info(`Lavalink node autoresumed ${players.length} after restart`)
+    log.info(`Lavalink node autoresumed ${players.length} after restart`);
   }
 
   async onPlayerDisconnect(player: Player) {
-    if (!this.handleFailures) return
+    if (!this.handleFailures) return;
 
-    const hasVC = await hasVoiceChannelSet(player.guildId)
+    const hasVC = await hasVoiceChannelSet(player.guildId);
     if (hasVC) {
-      log.debug(`Player disconnected from guild ID ${player.guildId}; reconnecting...`)
-      await this.playOnChannel(player.voiceChannelId, player.guildId)
+      log.debug(`Player disconnected from guild ID ${player.guildId}; reconnecting...`);
+      await this.playOnChannel(player.voiceChannelId, player.guildId);
     }
   }
 
   async onQueueEnd(player: Player) {
-    log.warn('Queue ended? Refreshing mount URL and reconnecting in 2s...')
-    this.streamURL = undefined
+    log.warn('Queue ended? Refreshing mount URL and reconnecting in 2s...');
+    this.streamURL = undefined;
 
     setTimeout(() => {
-      this.findStreamAndPlay(player)
-    }, 2000)
+      this.findStreamAndPlay(player);
+    }, 2000);
   }
 
   async playOnChannel(voiceChannelId: string, guildId: string) {
-    const pl = this.manager.getPlayer(guildId)
+    const pl = this.manager.getPlayer(guildId);
     if (pl) {
-      if (pl.playing) return // we're already playing...
+      if (pl.playing) return; // we're already playing...
     }
 
     const player = this.manager.createPlayer({
       voiceChannelId,
       guildId,
       textChannelId: '', // this is optional. useful for music bots, not so much for radio
-      autoPlay: true
-    })
+      autoPlay: true,
+    });
 
-    player.connect({ setDeaf: true })
+    player.connect({ setDeaf: true });
 
-    await this.findStreamAndPlay(player)
-    await this.updateChannelStatus(voiceChannelId, this.client.currentSong)
+    await this.findStreamAndPlay(player);
+    await this.updateChannelStatus(voiceChannelId, this.client.currentSong);
   }
 
   async findStreamAndPlay(player: Player) {
     const result = await this.manager.search({
-      query: await this.fetchStreamURL()
-    })
+      query: await this.fetchStreamURL(),
+    });
     if (!result.tracks[0]) {
-      log.error('Couldn\'t load WBOR stream URL... Retrying in 5s.')
-      return setTimeout(() => this.findStreamAndPlay(player), 5000)
+      log.error('Couldn\'t load WBOR stream URL... Retrying in 5s.');
+      setTimeout(() => this.findStreamAndPlay(player), 5000);
+      return;
     }
 
     player.queue.add(result.tracks[0]);
-    if (!player.playing) player.play();
+    if (!player.playing) await player.play();
   }
 
   async updateAllChannelStatus(song: { artist: string; title: string }) {
     await Promise.allSettled(
       this.manager.players.all
-        .map(a => a.voiceChannelId)
-        .map((id) => this.updateChannelStatus(id, song))
-    )
+        .map((a) => a.voiceChannelId)
+        .map((id) => this.updateChannelStatus(id, song)),
+    );
   }
 
   async updateChannelStatus(
@@ -140,7 +155,7 @@ export default class RadioManager {
     await this.client.stateHandler.waitForTrack();
     try {
       const status = `🎶 ${song.artist} - ${song.title}`;
-      log.debug(`Setting ${id} to ${status}`)
+      log.debug(`Setting ${id} to ${status}`);
 
       // Undocumented Discord API for setting voice channel status
       await fetch(`https://discord.com/api/v9/channels/${id}/voice-status`, {
@@ -185,14 +200,14 @@ export default class RadioManager {
       this.streamURL = mount.url;
       return this.streamURL!;
     } catch (e: any) {
-      log.err(e, 'Failed to get mount points from AzuraCast. Retrying in 2s...')
+      log.err(e, 'Failed to get mount points from AzuraCast. Retrying in 2s...');
       return new Promise((r) => {
-        setTimeout(() => r(this.fetchStreamURL()), 2000)
-      })
+        setTimeout(() => r(this.fetchStreamURL()), 2000);
+      });
     }
   }
 
   disconnectFromChannel(guildId: string) {
-    this.manager.getPlayer(guildId)?.disconnect()
+    this.manager.getPlayer(guildId)?.disconnect();
   }
 }
