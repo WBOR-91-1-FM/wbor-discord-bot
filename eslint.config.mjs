@@ -57,6 +57,7 @@ export default [
     rules: {
       'n/no-unsupported-features/node-builtins': 'off',
       radix: 'off',
+      '@stylistic/max-len': 'off',
     },
   },
 ];
