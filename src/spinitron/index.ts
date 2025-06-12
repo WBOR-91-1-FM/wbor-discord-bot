@@ -1,6 +1,6 @@
 import { fetchWithRetries } from 'fetch-with-retries';
 import { makeSpinitronPlaylist, type SpinitronPlaylist } from './types/playlist';
-import { makeSpinitronShow, type SpinitronShow } from './types/show';
+import { addMissingShowURLs, makeSpinitronShow, type SpinitronShow } from './types/show';
 import { getItemOrArray } from './utils';
 import type { SpinitronItem } from './types/common';
 import { PERSONA_TTL, SHOW_TTL } from './cache';
@@ -35,9 +35,7 @@ export default class SpinitronClient {
 
     shows = await Promise.all(shows.map(async (show) => this.fetchItemLinks(show)));
 
-    return shows.map((show) => ({
-      ...show,
-    })).slice(0, 6);
+    return addMissingShowURLs(shows.slice(0, 6));
   }
 
   /**
@@ -55,6 +53,7 @@ export default class SpinitronClient {
   async fetchItemLinks<T extends SpinitronItem>(item: T): Promise<T> {
     const result = item;
 
+    // eslint-disable-next-line no-underscore-dangle
     const person = getItemOrArray(item._links.persona || item._links.personas || []);
     if (person.length > 0) {
       result.personas = await this.multipleCachedRequests(
@@ -64,6 +63,7 @@ export default class SpinitronClient {
       );
     }
 
+    // eslint-disable-next-line no-underscore-dangle
     const { show, self } = item._links;
     // @ts-expect-error
     if (show?.href) {

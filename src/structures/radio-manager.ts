@@ -1,10 +1,11 @@
 import {
-  Manager, Node, Player, Track, type INode,
+  Manager, Player, type INode,
 } from 'moonlink.js';
+// eslint-disable-next-line import-x/no-extraneous-dependencies
 import { sleep } from 'bun';
-import type WBORClient from '../client.ts';
-import { logger } from '../utils/log.ts';
-import { hasVoiceChannelSet } from '../database/entities/guilds.ts';
+import type WBORClient from '../client';
+import { logger } from '../utils/log';
+import { hasVoiceChannelSet } from '../database/entities/guilds';
 
 const log = logger.on('lavalink');
 
@@ -25,6 +26,7 @@ export default class RadioManager {
     options: {
       resume: true,
       autoResume: true,
+      disableNativeSources: true,
     },
     sendPayload: (guildId: string, payload: string) => this.sendPayload(guildId, payload),
   });
@@ -84,6 +86,7 @@ export default class RadioManager {
     this.manager.packetUpdate(d);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   onNodeAutoResume(node: INode, players: Player[]) {
     log.info(`Lavalink node autoresumed ${players.length} after restart`);
   }
@@ -184,7 +187,8 @@ export default class RadioManager {
       const response = await fetch(process.env.AZURACAST_API_URL as string);
       const data = (await response.json()) as { mounts: { url: string }[] };
 
-      log.debug(`${data.mounts.length} mounts found:\n  -> ${data.mounts.map((mount: any) => `(${mount.id}) ${mount.name} (${mount.url})`).join('\n  -> ')}`);
+      const formatedMounts = data.mounts.map((mount: any) => `(${mount.id}) ${mount.name} (${mount.url})`).join('\n  -> ');
+      log.debug(`${data.mounts.length} mounts found:\n  -> ${formatedMounts}`);
 
       let mount: any = data.mounts.find((m: any) => m.is_default) || data.mounts[0];
       if (process.env.AZURACAST_MOUNT_ID) {

@@ -1,5 +1,5 @@
 import { MessageFlags } from 'discord.js';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import WBOREmbed from '../structures/wbor-embed';
 import type { CommandInfo } from '../structures/commands/command';
 import type Context from '../structures/commands/context';
@@ -27,15 +27,16 @@ export default async (ctx: Context) => {
     if (show.start.valueOf() <= Date.now() && show.end.valueOf() >= Date.now()) return;
 
     const timeUntilStart = formatDistanceToNow(show.start, { addSuffix: true });
-    text += `📻 **${show.title}**\n`;
+    const fromStartToEnd = `From ${format(show.start, 'h:mm a')} to ${format(show.end, 'h:mm a')}`.toLowerCase();
+    text += show.url ? `📻 **[${show.title}](${show.url})**\n` : `📻 **${show.title}**\n`;
     text += `🎙️ ${makeSpinitronDJNames(show.personas)}\n`;
-    text += `*${timeUntilStart}*\n\n`;
+    text += `${fromStartToEnd}\n*(${timeUntilStart})*\n\n`;
   });
 
   const embed = new WBOREmbed()
     .setTitle(`Upcoming shows on ${STATION_CALL_SIGN}`)
     .setDescription(text)
-    .setThumbnail(shows[0]?.image || ctx.client.currentSong.art)
+    .setThumbnail(shows[0]?.image ?? ctx.client.currentSong.art)
     .setFooter({ text: 'All times are in Eastern Time.' });
 
   return ctx.reply({ embeds: [embed] });

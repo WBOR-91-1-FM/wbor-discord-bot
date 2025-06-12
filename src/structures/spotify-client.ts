@@ -9,9 +9,9 @@ interface SpotifySongData {
 }
 
 export default class SpotifyClient {
-  private client: SpotifyWebApi | null = null;
+  private readonly client: SpotifyWebApi | null = null;
 
-  private cache = new Map<string, SpotifySongData>();
+  private readonly cache = new Map<string, SpotifySongData>();
 
   constructor() {
     if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
@@ -69,6 +69,8 @@ export default class SpotifyClient {
       this.client!.setAccessToken(r.body.access_token);
       log.info(`Spotify client authenticated. Expires in ${r.body.expires_in}.`);
       setTimeout(this.authenticate.bind(this), (r.body.expires_in - 2) * 1000);
+    }).catch((error: any) => {
+      log.error(`Failed to authenticate Spotify client: ${error?.stack}`);
     });
   }
 }
