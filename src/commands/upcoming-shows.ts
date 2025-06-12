@@ -27,10 +27,10 @@ export default async (ctx: Context) => {
     if (show.start.valueOf() <= Date.now() && show.end.valueOf() >= Date.now()) return;
 
     const timeUntilStart = formatDistanceToNow(show.start, { addSuffix: true });
-    const fromStartToEnd = `From ${format(show.start, 'h:mm a')} to ${format(show.end, 'h:mm a')}`.toLowerCase();
+    const fromStartToEnd = `From ${format(show.start, 'h:mm a').toLowerCase()} to ${format(show.end, 'h:mm a').toLowerCase()}`;
     text += show.url ? `📻 **[${show.title}](${show.url})**\n` : `📻 **${show.title}**\n`;
     text += `🎙️ ${makeSpinitronDJNames(show.personas)}\n`;
-    text += `${fromStartToEnd}\n*(${timeUntilStart})*\n\n`;
+    text += `⏰ ${fromStartToEnd}\n*(${timeUntilStart})*\n\n`;
   });
 
   const embed = new WBOREmbed()
