@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run bot" type="BunRunConfiguration">
+    <option name="program" value="index.ts" />
+    <option name="runtimeParameters">
+      <list>
+        <option value="--watch" />
+      </list>
+    </option>
+    <option name="workingDirectory" value="$PROJECT_DIR$" />
+    <method v="2" />
+  </configuration>
+</component>
