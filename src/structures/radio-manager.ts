@@ -111,11 +111,6 @@ export default class RadioManager {
   }
 
   async playOnChannel(voiceChannelId: string, guildId: string) {
-    const pl = this.manager.getPlayer(guildId);
-    if (pl) {
-      if (pl.playing) return; // we're already playing...
-    }
-
     const player = this.manager.createPlayer({
       voiceChannelId,
       guildId,
@@ -140,7 +135,7 @@ export default class RadioManager {
     }
 
     player.queue.add(result.tracks[0]);
-    if (!player.playing) await player.play();
+    await player.play();
   }
 
   async updateAllChannelStatus(song: { artist: string; title: string }) {
@@ -212,6 +207,12 @@ export default class RadioManager {
   }
 
   disconnectFromChannel(guildId: string) {
-    this.manager.getPlayer(guildId)?.disconnect();
+    const player = this.manager.getPlayer(guildId)
+    if (!player) {
+      log.warn(`Tried to disconnect from channel ${guildId} but no player was found.`);
+      return;
+    }
+
+    player.destroy();
   }
 }

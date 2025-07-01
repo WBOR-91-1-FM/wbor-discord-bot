@@ -22,28 +22,23 @@ export default async (ctx: Context): Promise<void> => {
   }
 
   // we tell the bot to join this voice channel automatically later on
-  ctx.guildEntity?.setVoiceChannel(member.voice.channel.id);
-
-  const conn = getVoiceConnection(ctx.message.guild!.id);
-  if (conn) {
-    ctx.client.radioManager.disconnectFromChannel(ctx.message.guild!.id);
-  }
-
+  await ctx.guildEntity?.setVoiceChannel(member.voice.channel.id);
   await ctx.defer();
-  const err = await ctx.client.radioManager.playOnChannel(member.voice.channel.id, member.guild.id)
+
+  const status = await ctx.client.radioManager.playOnChannel(member.voice.channel.id, member.guild.id)
     .catch((error) => {
       log.err(error, 'Error while trying to join voice channel');
       return true;
     });
 
-  if (err) {
-    await ctx.message.reply(
+  if (status) {
+    await ctx.message.editReply(
       '❗ An error occurred while trying to join the voice channel. Please try again later.',
     );
     return;
   }
 
-  await ctx.message.reply(
+  await ctx.message.editReply(
     `📻 You'll now be listening to **${ctx.client.currentSong.title}** on <#${member.voice.channel.id}>.`,
   );
 };

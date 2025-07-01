@@ -29,11 +29,6 @@ export default async (ctx: Context): Promise<void> => {
     return;
   }
 
-  if (!getVoiceConnection(ctx.message.guild.id)) {
-    await ctx.message.reply('🤔 I am not connected to a voice channel.');
-    return;
-  }
-
   ctx.client.radioManager.disconnectFromChannel(ctx.message.guild.id);
 
   await ctx.guildEntity?.unsetVoiceChannel();

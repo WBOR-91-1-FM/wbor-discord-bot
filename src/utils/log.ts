@@ -94,11 +94,10 @@ export class Logger {
   err(e: Error, message: string | undefined = undefined): void {
     if (message) {
       this.error(message);
-      console.error(e.stack);
     }
 
-    this.error(`An error was thrown: ${e.message}`);
-    console.error(e.stack || '');
+    this.error(`An error was thrown: ${e?.message}`);
+    console.error(e?.stack || '');
   }
 }
 
